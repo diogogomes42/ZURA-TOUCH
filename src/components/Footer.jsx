@@ -27,7 +27,13 @@ export function Footer() {
                 {t("footer.description")}
               </p>
               <div className="mt-4 flex gap-4">
-                <a href="#" className="text-[#9b97b3] hover:text-purple-400 transition-colors" aria-label="Instagram">
+                <a
+                  href="https://www.instagram.com/zuratouch/"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-[#9b97b3] hover:text-purple-400 transition-colors"
+                  aria-label="Instagram"
+                >
                   <Instagram size={20} />
                 </a>
                 <a href="#" className="text-[#9b97b3] hover:text-purple-400 transition-colors" aria-label="LinkedIn">
