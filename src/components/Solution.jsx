@@ -21,8 +21,8 @@ export function Solution() {
           </p>
         </div>
 
-        <div className="flex flex-col lg:flex-row gap-8 sm:gap-12 lg:gap-20 items-center">
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5 sm:gap-8 md:gap-10 flex-1 w-full [&>*:nth-child(3)]:justify-self-center md:[&>*:nth-child(3)]:justify-self-stretch">
+        <div className="grid items-center gap-6 sm:gap-8 lg:grid-cols-[minmax(0,1.3fr)_minmax(0,0.7fr)] lg:gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-5 sm:gap-6 lg:gap-6 w-full [&>*:nth-child(3)]:justify-self-center xl:[&>*:nth-child(3)]:justify-self-stretch">
             {pillars.map((pillar, i) => {
               const Icon = icons[i]
               return (
@@ -39,11 +39,11 @@ export function Solution() {
               )
             })}
           </div>
-          <div className="flex justify-center lg:shrink-0 lg:items-center">
+          <div className="flex justify-center lg:justify-end lg:-ml-2 xl:-ml-4">
             <img
               src="/assets/mascot/thumbs-up-mascot.png"
               alt=""
-              className="w-32 h-auto sm:w-40 lg:w-48 opacity-90"
+              className="w-72 h-auto sm:w-[22rem] lg:w-[26rem] xl:w-[28rem] opacity-90"
               loading="lazy"
               aria-hidden
             />

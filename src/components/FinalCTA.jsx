@@ -8,9 +8,6 @@ export function FinalCTA() {
 
   return (
     <section className="py-16 sm:py-20 lg:py-28 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
-      <div className="absolute inset-0 bg-gradient-to-br from-purple-600/25 via-pink-600/15 to-transparent" />
-      <div className="absolute inset-0 bg-grid opacity-40" />
-
       <div ref={ref} className={`relative mx-auto max-w-6xl flex flex-col lg:flex-row gap-10 sm:gap-16 lg:gap-24 items-center ${isVisible ? "animate-in" : "opacity-0"}`}>
         <div className="flex-1 text-center lg:text-left">
           <h2 className="text-3xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-white">

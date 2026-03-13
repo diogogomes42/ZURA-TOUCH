@@ -12,8 +12,9 @@ export function HowItWorks() {
 
   return (
     <section id="how-it-works" className="py-16 sm:py-20 lg:py-24 px-4 sm:px-6 lg:px-8">
-      <div ref={ref} className={`mx-auto max-w-6xl flex flex-col lg:flex-row gap-8 sm:gap-12 lg:gap-20 items-stretch ${isVisible ? "animate-in" : "opacity-0"}`}>
-        <div className="flex-1 w-full">
+      <div ref={ref} className={`mx-auto max-w-6xl ${isVisible ? "animate-in" : "opacity-0"}`}>
+        <div className="grid items-center gap-6 sm:gap-8 lg:grid-cols-[minmax(0,1.3fr)_minmax(0,0.7fr)] lg:gap-8">
+          <div>
           <div className="text-center mb-10 sm:mb-16">
             <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-white">
               {t("howItWorks.title")}
@@ -23,7 +24,7 @@ export function HowItWorks() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5 sm:gap-8 md:gap-10 [&>*:nth-child(3)]:justify-self-center md:[&>*:nth-child(3)]:justify-self-stretch">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-5 sm:gap-6 lg:gap-6 [&>*:nth-child(3)]:justify-self-center xl:[&>*:nth-child(3)]:justify-self-stretch">
             {steps.map((step, i) => {
               const Icon = icons[i]
               return (
@@ -46,16 +47,17 @@ export function HowItWorks() {
               )
             })}
           </div>
-        </div>
+          </div>
 
-        <div className="flex justify-center lg:justify-end lg:items-center lg:self-center">
-          <img
-            src="/assets/mascot/coding-mascot.png"
-            alt=""
-            className="w-44 h-auto sm:w-56 lg:w-64"
-            loading="lazy"
-            aria-hidden
-          />
+          <div className="flex justify-center lg:justify-end lg:-ml-2 xl:-ml-4 lg:mt-16">
+            <img
+              src="/assets/mascot/coding-mascot.png"
+              alt=""
+              className="w-80 h-auto sm:w-[24rem] lg:w-[28rem] xl:w-[30rem] lg:translate-y-12"
+              loading="lazy"
+              aria-hidden
+            />
+          </div>
         </div>
       </div>
     </section>

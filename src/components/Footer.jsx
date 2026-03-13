@@ -1,5 +1,4 @@
 import { Mail, MapPin, Instagram, Linkedin } from "lucide-react"
-import { Newsletter } from "./Newsletter"
 import { useLanguage } from "../i18n/LanguageContext"
 
 export function Footer() {
@@ -19,11 +18,7 @@ export function Footer() {
     <footer className="border-t border-purple-500/10">
       <div className="py-12 sm:py-16 px-4 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-6xl">
-          <div className="mb-12 max-w-xl">
-            <Newsletter />
-          </div>
-
-          <div className="grid gap-10 sm:gap-12 md:grid-cols-2 lg:grid-cols-4 mt-8 sm:mt-12">
+          <div className="grid gap-10 sm:gap-12 md:grid-cols-2 lg:grid-cols-4">
             <div>
               <a href="#" className="inline-block">
                 <img src="/logo.png" alt="Zura Touch" className="h-12 w-auto" />

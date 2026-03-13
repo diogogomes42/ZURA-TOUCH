@@ -3,8 +3,8 @@ import { Navbar } from "./components/Navbar"
 import { Hero } from "./components/Hero"
 import { Problem } from "./components/Problem"
 import { Solution } from "./components/Solution"
-import { FeaturePromos } from "./components/FeaturePromos"
 import { MarketOpportunity } from "./components/MarketOpportunity"
+import { MachinesShowcase } from "./components/MachinesShowcase"
 import { BusinessModel } from "./components/BusinessModel"
 import { HowItWorks } from "./components/HowItWorks"
 import { WhoItsFor } from "./components/WhoItsFor"
@@ -48,8 +48,8 @@ function App() {
         <Hero />
         <Problem />
         <Solution />
-        <FeaturePromos />
         <MarketOpportunity />
+        <MachinesShowcase />
         <BusinessModel />
         <HowItWorks />
         <WhoItsFor />

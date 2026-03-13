@@ -6,25 +6,12 @@ export function MarketOpportunity() {
   const [ref, isVisible] = useScrollAnimation(0.1)
   const { t } = useLanguage()
   const stats = t("market.stats")
-  const tamSamSom = [
-    { acronym: "TAM", ...t("market.tam") },
-    { acronym: "SAM", ...t("market.sam") },
-    { acronym: "SOM", ...t("market.som") },
-  ]
 
   return (
     <section
       id="market"
       className="py-16 sm:py-20 lg:py-24 px-4 sm:px-6 lg:px-8 relative overflow-hidden"
     >
-      <img
-        src="/assets/mascot/analytics-mascot.png"
-        alt=""
-        className="absolute right-0 top-1/2 -translate-y-1/2 w-80 h-auto lg:w-96 opacity-[0.15] pointer-events-none select-none hidden md:block"
-        loading="lazy"
-        aria-hidden
-      />
-
       <div ref={ref} className={`relative mx-auto max-w-6xl ${isVisible ? "animate-in" : "opacity-0"}`}>
         <div className="text-center mb-10 sm:mb-16">
           <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-white">
@@ -46,34 +33,15 @@ export function MarketOpportunity() {
             {stats.map((stat) => (
               <div
                 key={stat.label}
-                className="p-5 sm:p-6 rounded-2xl border border-purple-500/20 bg-[rgba(30,27,53,0.6)] text-center hover-lift hover:border-purple-500/30 backdrop-blur-sm"
+                className="p-5 sm:p-6 rounded-2xl border border-purple-500/20 bg-[rgba(30,27,53,0.6)] text-center hover-lift hover:border-purple-500/30 backdrop-blur-sm flex flex-col justify-center min-h-[130px] sm:min-h-[150px]"
               >
                 <p className="text-3xl sm:text-4xl lg:text-[2.5rem] font-extrabold gradient-text tracking-tight">
                   {stat.value}
                 </p>
                 <p className="mt-2 text-sm text-[#c4c1d6]">{stat.label}</p>
-                <p className="mt-3 text-[10px] font-semibold uppercase tracking-widest text-[#9b97b3]">
-                  {t("market.marketData")}
-                </p>
               </div>
             ))}
           </div>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5 sm:gap-6 [&>*:nth-child(3)]:justify-self-center md:[&>*:nth-child(3)]:justify-self-stretch">
-          {tamSamSom.map((item) => (
-            <div
-              key={item.acronym}
-              className="p-6 sm:p-8 rounded-2xl border border-purple-500/20 bg-gradient-to-br from-purple-500/5 to-transparent"
-            >
-              <div className="flex items-center gap-2 mb-3">
-                <TrendingUp size={20} className="text-purple-400" />
-                <span className="text-sm font-bold text-purple-400 uppercase tracking-wider">{item.acronym}</span>
-              </div>
-              <h3 className="text-lg font-semibold text-white">{item.full}</h3>
-              <p className="mt-2 text-sm text-[#c4c1d6]">{item.desc}</p>
-            </div>
-          ))}
         </div>
       </div>
     </section>

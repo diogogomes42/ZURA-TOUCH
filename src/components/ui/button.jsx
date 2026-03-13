@@ -1,5 +1,6 @@
 import * as React from "react"
 import { cva } from "class-variance-authority"
+import { motion } from "framer-motion"
 import { cn } from "../../lib/utils"
 
 const buttonVariants = cva(
@@ -39,13 +40,16 @@ const Button = React.forwardRef(
       })
     }
     return (
-      <button
+      <motion.button
         className={classes}
         ref={ref}
+        whileHover={{ y: -2, scale: 1.03 }}
+        whileTap={{ scale: 0.97, y: 0 }}
+        transition={{ type: "spring", stiffness: 380, damping: 24 }}
         {...props}
       >
         {children}
-      </button>
+      </motion.button>
     )
   }
 )
