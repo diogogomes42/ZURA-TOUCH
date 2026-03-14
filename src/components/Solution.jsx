@@ -45,6 +45,7 @@ export function Solution() {
               alt=""
               className="w-72 h-auto sm:w-[22rem] lg:w-[26rem] xl:w-[28rem] opacity-90"
               loading="lazy"
+              decoding="async"
               aria-hidden
             />
           </div>

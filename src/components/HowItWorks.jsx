@@ -55,6 +55,7 @@ export function HowItWorks() {
               alt=""
               className="w-80 h-auto sm:w-[24rem] lg:w-[28rem] xl:w-[30rem] lg:translate-y-12"
               loading="lazy"
+              decoding="async"
               aria-hidden
             />
           </div>

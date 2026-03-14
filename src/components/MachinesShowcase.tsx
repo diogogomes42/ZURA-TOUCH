@@ -247,6 +247,8 @@ export function MachinesShowcase() {
                 key={activeMachine.image}
                 src={activeMachine.image}
                 alt={activeMachine.title}
+                loading="lazy"
+                decoding="async"
                 className="relative z-10 mx-auto max-h-[460px] sm:max-h-[500px] lg:max-h-[540px] w-auto object-contain drop-shadow-[0_40px_80px_rgba(0,0,0,0.9)]"
                 initial={{ opacity: 0, y: 24, scale: 0.94 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}

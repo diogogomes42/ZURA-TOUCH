@@ -37,6 +37,7 @@ export function FinalCTA() {
             alt=""
             className="w-60 h-auto sm:w-72 lg:w-96"
             loading="lazy"
+            decoding="async"
             aria-hidden
           />
         </div>
