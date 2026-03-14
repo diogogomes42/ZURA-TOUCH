@@ -29,7 +29,7 @@ export function BusinessModel() {
         </motion.div>
 
         <motion.div
-          className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5 sm:gap-6 md:gap-8 lg:gap-10 [&>*:nth-child(3)]:justify-self-center md:[&>*:nth-child(3)]:justify-self-stretch"
+          className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5 sm:gap-6 md:gap-8 lg:gap-10 sm:[&>*:nth-last-child(1):nth-child(odd)]:col-span-2 sm:[&>*:nth-last-child(1):nth-child(odd)]:justify-self-center md:[&>*:nth-last-child(1):nth-child(odd)]:col-span-1 md:[&>*:nth-last-child(1):nth-child(odd)]:justify-self-stretch"
           variants={staggerContainer}
           initial="hidden"
           whileInView="show"

@@ -28,7 +28,7 @@ export function WhoItsFor() {
         </motion.div>
 
         <motion.div
-          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 sm:gap-5 lg:gap-6 [&>*:nth-child(5)]:justify-self-center lg:[&>*:nth-child(5)]:justify-self-stretch"
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 sm:gap-5 lg:gap-6 sm:[&>*:nth-last-child(1):nth-child(odd)]:col-span-2 sm:[&>*:nth-last-child(1):nth-child(odd)]:justify-self-center lg:[&>*:nth-last-child(1):nth-child(odd)]:col-span-1 lg:[&>*:nth-last-child(1):nth-child(odd)]:justify-self-stretch"
           variants={staggerContainer}
           initial="hidden"
           whileInView="show"
