@@ -13,8 +13,10 @@ import { FinalCTA } from "./components/FinalCTA"
 import { Contact } from "./components/Contact"
 import { Footer } from "./components/Footer"
 import { LegalModal } from "./components/LegalModal"
+import { useLanguage } from "./i18n/LanguageContext"
 
 function App() {
+  const { lang } = useLanguage()
   const [legalType, setLegalType] = useState(() => {
     if (typeof window !== "undefined") {
       const hash = window.location.hash.slice(1)
@@ -44,7 +46,7 @@ function App() {
       <div className="pointer-events-none fixed inset-0 -z-10 section-accent" aria-hidden />
       <div className="pointer-events-none fixed inset-0 -z-10 bg-grid opacity-50" aria-hidden />
       <Navbar />
-      <main>
+      <main key={lang}>
         <Hero />
         <Problem />
         <Solution />
@@ -60,7 +62,7 @@ function App() {
       </main>
 
       {legalType && (
-        <LegalModal type={legalType} onClose={closeLegal} />
+        <LegalModal key={lang} type={legalType} onClose={closeLegal} />
       )}
     </div>
   )

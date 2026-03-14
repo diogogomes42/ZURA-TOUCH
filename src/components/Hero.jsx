@@ -118,7 +118,7 @@ export function Hero() {
                 alt="Zura Touch mascot"
                 fetchPriority="high"
                 decoding="async"
-                className="relative w-80 max-w-[95vw] sm:w-[26rem] md:w-[32rem] lg:w-[40rem] xl:w-[44rem] h-auto drop-shadow-[0_40px_80px_rgba(0,0,0,0.9)] translate-x-3"
+                className="relative h-auto w-full max-w-[80vw] sm:max-w-[60vw] md:max-w-[50vw] lg:max-w-[40vw] xl:max-w-[36vw] drop-shadow-[0_40px_80px_rgba(0,0,0,0.9)] translate-x-3"
                 initial={{ opacity: 0, y: 30, scale: 0.95 }}
                 animate={{ opacity: 1, y: [0, -14, 0], scale: 1 }}
                 transition={{
