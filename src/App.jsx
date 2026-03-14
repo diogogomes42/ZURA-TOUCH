@@ -1,19 +1,18 @@
-import { useState, useEffect, lazy, Suspense } from "react"
+import { useState, useEffect } from "react"
 import { Navbar } from "./components/Navbar"
 import { Hero } from "./components/Hero"
-
-const Problem = lazy(() => import("./components/Problem").then((m) => ({ default: m.Problem })))
-const Solution = lazy(() => import("./components/Solution").then((m) => ({ default: m.Solution })))
-const MarketOpportunity = lazy(() => import("./components/MarketOpportunity").then((m) => ({ default: m.MarketOpportunity })))
-const MachinesShowcase = lazy(() => import("./components/MachinesShowcase").then((m) => ({ default: m.MachinesShowcase })))
-const BusinessModel = lazy(() => import("./components/BusinessModel").then((m) => ({ default: m.BusinessModel })))
-const HowItWorks = lazy(() => import("./components/HowItWorks").then((m) => ({ default: m.HowItWorks })))
-const WhoItsFor = lazy(() => import("./components/WhoItsFor").then((m) => ({ default: m.WhoItsFor })))
-const TrustedStrip = lazy(() => import("./components/TrustedStrip").then((m) => ({ default: m.TrustedStrip })))
-const FinalCTA = lazy(() => import("./components/FinalCTA").then((m) => ({ default: m.FinalCTA })))
-const Contact = lazy(() => import("./components/Contact").then((m) => ({ default: m.Contact })))
-const Footer = lazy(() => import("./components/Footer").then((m) => ({ default: m.Footer })))
-const LegalModal = lazy(() => import("./components/LegalModal").then((m) => ({ default: m.LegalModal })))
+import { Problem } from "./components/Problem"
+import { Solution } from "./components/Solution"
+import { MarketOpportunity } from "./components/MarketOpportunity"
+import { MachinesShowcase } from "./components/MachinesShowcase"
+import { BusinessModel } from "./components/BusinessModel"
+import { HowItWorks } from "./components/HowItWorks"
+import { WhoItsFor } from "./components/WhoItsFor"
+import { TrustedStrip } from "./components/TrustedStrip"
+import { FinalCTA } from "./components/FinalCTA"
+import { Contact } from "./components/Contact"
+import { Footer } from "./components/Footer"
+import { LegalModal } from "./components/LegalModal"
 
 function App() {
   const [legalType, setLegalType] = useState(() => {
@@ -47,25 +46,21 @@ function App() {
       <Navbar />
       <main>
         <Hero />
-        <Suspense fallback={null}>
-          <Problem />
-          <Solution />
-          <MarketOpportunity />
-          <MachinesShowcase />
-          <BusinessModel />
-          <HowItWorks />
-          <WhoItsFor />
-          <TrustedStrip />
-          <FinalCTA />
-          <Contact />
-          <Footer />
-        </Suspense>
+        <Problem />
+        <Solution />
+        <MarketOpportunity />
+        <MachinesShowcase />
+        <BusinessModel />
+        <HowItWorks />
+        <WhoItsFor />
+        <TrustedStrip />
+        <FinalCTA />
+        <Contact />
+        <Footer />
       </main>
 
       {legalType && (
-        <Suspense fallback={null}>
-          <LegalModal type={legalType} onClose={closeLegal} />
-        </Suspense>
+        <LegalModal type={legalType} onClose={closeLegal} />
       )}
     </div>
   )

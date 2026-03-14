@@ -21,8 +21,11 @@ export function Contact() {
       message: formData.get("message") || "",
     }
 
+    setStatus("submitting")
+
     try {
-      await fetch(
+      // Fire-and-forget: não bloqueamos a UI à espera da resposta do Apps Script
+      fetch(
         "https://script.google.com/macros/s/AKfycbyoLuIRiQmlFJWdbjiXxtTL4rwCciUfrdUabdQlp0pxP_X9N8EyAL1nAxqZRdaUxCl3pA/exec",
         {
           method: "POST",
@@ -33,7 +36,9 @@ export function Contact() {
           mode: "no-cors",
           body: JSON.stringify(payload),
         }
-      )
+      ).catch((error) => {
+        console.error("Error submitting contact form:", error)
+      })
 
       setStatus("submitted")
       form.reset()
@@ -89,7 +94,13 @@ export function Contact() {
                   <label htmlFor="message" className="block text-sm font-medium text-[#c4c1d6]">{t("contact.message")}</label>
                   <Textarea id="message" name="message" placeholder={t("contact.messagePlaceholder")} required className="mt-2" />
                 </div>
-                <Button type="submit" variant="primary" size="lg" className="w-full sm:w-auto">
+                <Button
+                  type="submit"
+                  variant="primary"
+                  size="lg"
+                  className="w-full sm:w-auto"
+                  disabled={status === "submitting"}
+                >
                   {t("contact.submit")}
                 </Button>
               </form>
