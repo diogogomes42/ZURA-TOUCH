@@ -36,7 +36,13 @@ export function Footer() {
                 >
                   <Instagram size={20} />
                 </a>
-                <a href="#" className="text-[#9b97b3] hover:text-purple-400 transition-colors" aria-label="LinkedIn">
+                <a
+                  href="https://linkedin.com/in/zura-touch-aba8ba3b2"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-[#9b97b3] hover:text-purple-400 transition-colors"
+                  aria-label="LinkedIn"
+                >
                   <Linkedin size={20} />
                 </a>
               </div>
