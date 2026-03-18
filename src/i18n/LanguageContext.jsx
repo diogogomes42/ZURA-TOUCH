@@ -10,6 +10,13 @@ export function LanguageProvider({ children }) {
     if (typeof window !== "undefined") {
       const stored = localStorage.getItem(STORAGE_KEY)
       if (stored === "pt" || stored === "en") return stored
+
+      // Auto-detect language for first-time visitors:
+      // - Prefer Portuguese when browser/OS languages include "pt" (Portugal or other lusophone locales).
+      // - Fallback to English otherwise.
+      const navLangs = (navigator.languages?.length ? navigator.languages : [navigator.language]).filter(Boolean)
+      const hasPortuguese = navLangs.some((l) => String(l).toLowerCase().startsWith("pt"))
+      if (hasPortuguese) return "pt"
     }
     return "en"
   })
@@ -24,7 +31,21 @@ export function LanguageProvider({ children }) {
   }, [lang])
 
   const setLang = (newLang) => {
-    if (newLang === "pt" || newLang === "en") setLangState(newLang)
+    if (newLang !== "pt" && newLang !== "en") return
+    if (newLang === lang) return
+
+    // Persist immediately, then force a full refresh to avoid any stale UI state
+    // where some sections/cards don't re-render correctly after a language switch.
+    try {
+      localStorage.setItem(STORAGE_KEY, newLang)
+    } catch {}
+
+    if (typeof window !== "undefined") {
+      window.location.reload()
+      return
+    }
+
+    setLangState(newLang)
   }
 
   const t = (path) => {
