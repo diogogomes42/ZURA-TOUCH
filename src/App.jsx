@@ -17,6 +17,8 @@ import { useLanguage } from "./i18n/LanguageContext"
 
 function App() {
   const { lang } = useLanguage()
+  const whatsappBubbleText =
+    lang === "pt" ? "Quero saber mais sobre a Zura" : "I want to know more about Zura"
   const [legalType, setLegalType] = useState(() => {
     if (typeof window !== "undefined") {
       const hash = window.location.hash.slice(1)
@@ -64,6 +66,25 @@ function App() {
       {legalType && (
         <LegalModal key={lang} type={legalType} onClose={closeLegal} />
       )}
+
+      <a
+        className="whatsapp-fab"
+        href="https://wa.me/351931708796"
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label="WhatsApp"
+        title="WhatsApp"
+      >
+        <span className="whatsapp-bubble" aria-hidden="true">
+          {whatsappBubbleText}
+        </span>
+        <img
+          src="/assets/whatsapp/whatsapp-icon.png"
+          alt=""
+          className="whatsapp-icon"
+          aria-hidden="true"
+        />
+      </a>
     </div>
   )
 }
