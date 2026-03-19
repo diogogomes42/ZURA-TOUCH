@@ -271,7 +271,7 @@ body {
   display: block;
   object-fit: contain;
   filter: drop-shadow(0 10px 22px rgba(0, 0, 0, 0.35));
-  transform: translateX(2px) translateY(2px) scale(0.92);
+  transform: translateX(2px) translateY(2px) scale();
   transform-origin: center;
 }
 
