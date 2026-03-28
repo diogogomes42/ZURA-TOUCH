@@ -26,7 +26,7 @@ export function FinalCTA() {
               size="lg"
               className="text-base font-bold neon-glow btn-glow-pulse transition-all duration-300 hover:scale-[1.03]"
             >
-              <a href="#contact">{t("finalCTA.partnerUp")}</a>
+              <a href="/contacto/">{t("finalCTA.partnerUp")}</a>
             </Button>
           </div>
         </div>

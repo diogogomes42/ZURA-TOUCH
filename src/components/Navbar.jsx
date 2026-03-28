@@ -28,12 +28,12 @@ export function Navbar() {
   }, [])
 
   const navLinks = [
-    { href: "#problem", label: t("nav.problem") },
-    { href: "#solution", label: t("nav.solution") },
-    { href: "#market", label: t("nav.market") },
-    { href: "#business-model", label: t("nav.business") },
-    { href: "#how-it-works", label: t("nav.howItWorks") },
-    { href: "#who-its-for", label: t("nav.whoItsFor") },
+    { href: "/problema/", label: t("nav.problem") },
+    { href: "/solucao/", label: t("nav.solution") },
+    { href: "/mercado/", label: t("nav.market") },
+    { href: "/negocio/", label: t("nav.business") },
+    { href: "/como-funciona/", label: t("nav.howItWorks") },
+    { href: "/para-quem/", label: t("nav.whoItsFor") },
   ]
 
   useEffect(() => {
@@ -50,11 +50,23 @@ export function Navbar() {
       )}
     >
       <nav className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
-        <a href="#" className="flex items-center">
+        <a href="/" className="flex items-center">
           <img src="/logo.png" alt="Zura Touch" className="h-12 w-auto sm:h-14" />
         </a>
 
         <div className="hidden lg:flex lg:items-center lg:gap-6">
+          <a
+            href="/servicos/"
+            className="relative text-sm font-semibold text-[#c4c1d6] transition-colors hover:text-white"
+          >
+            {lang === "pt" ? "Serviços" : "Services"}
+          </a>
+          <a
+            href="/maquinas/"
+            className="relative text-sm font-semibold text-[#c4c1d6] transition-colors hover:text-white"
+          >
+            {lang === "pt" ? "Máquinas" : "Machines"}
+          </a>
           {navLinks.map((link) => (
             <a
               key={link.href}
@@ -99,7 +111,7 @@ export function Navbar() {
             )}
           </div>
           <Button asChild variant="primary" size="sm" className="font-bold">
-            <a href="#contact">{t("nav.cta")}</a>
+            <a href="/contacto/">{t("nav.cta")}</a>
           </Button>
         </div>
 
@@ -117,6 +129,20 @@ export function Navbar() {
       {isMobileMenuOpen && (
         <div className="lg:hidden border-t border-purple-500/10 bg-[var(--bg-base)]/95 backdrop-blur-md">
           <div className="flex flex-col gap-1 px-4 py-4">
+            <a
+              href="/servicos/"
+              className="block rounded-lg px-4 py-3.5 min-h-[44px] text-sm font-semibold text-[#c4c1d6] hover:bg-purple-500/10 hover:text-white active:bg-purple-500/15 touch-manipulation"
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              {lang === "pt" ? "Serviços" : "Services"}
+            </a>
+            <a
+              href="/maquinas/"
+              className="block rounded-lg px-4 py-3.5 min-h-[44px] text-sm font-semibold text-[#c4c1d6] hover:bg-purple-500/10 hover:text-white active:bg-purple-500/15 touch-manipulation"
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              {lang === "pt" ? "Máquinas" : "Machines"}
+            </a>
             {navLinks.map((link) => (
               <a
                 key={link.href}
@@ -159,7 +185,7 @@ export function Navbar() {
               )}
             </div>
             <Button asChild variant="primary" className="mt-2 font-bold">
-              <a href="#contact" onClick={() => setIsMobileMenuOpen(false)}>{t("nav.cta")}</a>
+              <a href="/contacto/" onClick={() => setIsMobileMenuOpen(false)}>{t("nav.cta")}</a>
             </Button>
           </div>
         </div>

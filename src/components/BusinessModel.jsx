@@ -55,7 +55,7 @@ export function BusinessModel() {
                 <h3 className="mt-6 text-xl font-bold text-white">{model.title}</h3>
                 <p className="mt-3 text-sm text-[#c4c1d6]">{model.description}</p>
                 <Button asChild variant="primary" size="sm" className="mt-6">
-                  <a href="#contact">{model.cta} →</a>
+                  <a href="/contacto/">{model.cta} →</a>
                 </Button>
               </motion.div>
             )

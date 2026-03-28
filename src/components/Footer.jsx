@@ -2,16 +2,18 @@ import { Mail, MapPin, Instagram, Linkedin } from "lucide-react"
 import { useLanguage } from "../i18n/LanguageContext"
 
 export function Footer() {
-  const { t } = useLanguage()
+  const { t, lang } = useLanguage()
 
   const navLinks = [
-    { href: "#problem", label: t("nav.problem") },
-    { href: "#solution", label: t("nav.solution") },
-    { href: "#market", label: t("nav.market") },
-    { href: "#business-model", label: t("businessModel.title") },
-    { href: "#how-it-works", label: t("nav.howItWorks") },
-    { href: "#who-its-for", label: t("nav.whoItsFor") },
-    { href: "#contact", label: t("nav.contact") },
+    { href: "/servicos/", label: lang === "pt" ? "Serviços" : "Services" },
+    { href: "/maquinas/", label: lang === "pt" ? "Máquinas" : "Machines" },
+    { href: "/problema/", label: t("nav.problem") },
+    { href: "/solucao/", label: t("nav.solution") },
+    { href: "/mercado/", label: t("nav.market") },
+    { href: "/negocio/", label: t("nav.business") },
+    { href: "/como-funciona/", label: t("nav.howItWorks") },
+    { href: "/para-quem/", label: t("nav.whoItsFor") },
+    { href: "/contacto/", label: t("nav.contact") },
   ]
 
   return (
@@ -20,7 +22,7 @@ export function Footer() {
         <div className="mx-auto max-w-6xl">
           <div className="grid gap-10 sm:gap-12 md:grid-cols-2 lg:grid-cols-4">
             <div>
-              <a href="#" className="inline-block">
+              <a href="/" className="inline-block">
                 <img src="/logo.png" alt="Zura Touch" className="h-12 w-auto" />
               </a>
               <p className="mt-4 text-sm text-[#c4c1d6]">
@@ -94,12 +96,12 @@ export function Footer() {
               <p className="text-xs font-semibold uppercase tracking-wider text-[#9b97b3]">{t("footer.legal")}</p>
               <ul className="mt-4 space-y-2">
                 <li>
-                  <a href="#privacy" className="text-sm text-[#c4c1d6] hover:text-white transition-colors">
+                  <a href="/privacidade/" className="text-sm text-[#c4c1d6] hover:text-white transition-colors">
                     {t("footer.privacy")}
                   </a>
                 </li>
                 <li>
-                  <a href="#terms" className="text-sm text-[#c4c1d6] hover:text-white transition-colors">
+                  <a href="/termos/" className="text-sm text-[#c4c1d6] hover:text-white transition-colors">
                     {t("footer.terms")}
                   </a>
                 </li>

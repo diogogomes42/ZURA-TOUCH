@@ -82,7 +82,7 @@ export function Hero() {
                   size="lg"
                   className="px-10 sm:px-12 text-lg font-bold btn-glow-pulse neon-glow transition-all duration-300 hover:scale-[1.04]"
                 >
-                  <a href="#contact">{t("hero.cta")}</a>
+                  <a href="/contacto/">{t("hero.cta")}</a>
                 </Button>
               </motion.div>
               <Button
@@ -91,7 +91,7 @@ export function Hero() {
                 size="lg"
                 className="px-8 text-sm sm:text-base font-semibold border-purple-500/50 text-purple-200 hover:bg-purple-500/10 hover:border-purple-400"
               >
-                <a href="#how-it-works">
+                <a href="/como-funciona/">
                   {lang === "pt" ? "Ver Como Funciona" : "See How It Works"}
                 </a>
               </Button>
