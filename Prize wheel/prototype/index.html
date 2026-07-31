@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="pt-PT">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Zura Touch - Preview</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="app-shell">
+    <header><img src="zura_touch_logo.png" alt="Zura Touch" class="brand-logo" /><small>MYSTERY BOX</small></header>
+    <section class="game" aria-live="polite">
+      <div class="pointer" aria-hidden="true"></div>
+      <div id="wheel" class="wheel" aria-label="Roda de prémios">
+        <div class="wheel-label" style="--angle:60deg">BEBIDA</div>
+        <div class="wheel-label" style="--angle:180deg">SNACK</div>
+        <div class="wheel-label" style="--angle:300deg">PRÉMIO<br>PREMIUM</div>
+      </div>
+      <p id="status" class="status">Gira a roda e descobre a tua Mystery Box.</p>
+      <button id="spin" type="button">GIRAR E GANHAR <span>€ 2,00</span></button><button id="reset" class="secondary" type="button" hidden>VOLTAR AO INÍCIO</button>
+    </section>
+    <footer>Demo de interface - pagamentos e máquina simulados</footer>
+  </main><script src="app.js"></script>
+</body>
+</html>

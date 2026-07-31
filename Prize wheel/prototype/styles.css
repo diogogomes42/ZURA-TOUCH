@@ -1,0 +1,37 @@
+:root { color-scheme: dark; font-family: Inter, Arial, sans-serif; } * { box-sizing: border-box; }
+body { min-height:100vh; margin:0; display:grid; place-items:center; background:radial-gradient(circle at 50% 20%,#344a78,#101828 57%); color:#fff; }
+.app-shell { width:min(100%,620px); min-height:100vh; padding:36px 24px 22px; display:flex; flex-direction:column; text-align:center; }
+header { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; } .brand-logo { width:min(200px,70vw); height:auto; max-height:140px; display:block; object-fit:contain; } header small { display:block; color:#fdb022; font-size:10px; letter-spacing:1.7px; }
+.game { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; }
+.wheel {
+  width:min(76vw,370px);
+  aspect-ratio:1;
+  border:10px solid #f8fafc;
+  border-radius:50%;
+  position:relative;
+  overflow:hidden;
+  --label-offset:calc(min(76vw,370px) * 0.29);
+  background:conic-gradient(from 0deg,#3775c7 0 33.333%,#e7a22b 33.333% 66.666%,#9a63d8 66.666% 100%);
+  box-shadow:0 0 0 7px #15213a,0 22px 55px #03071288;
+  transition:transform 4.2s cubic-bezier(.12,.78,.09,1);
+}
+.wheel::after { content:''; position:absolute; inset:43%; border-radius:50%; background:#f8fafc; box-shadow:0 0 0 7px #17223b; z-index:2; }
+.pointer { z-index:1; width:0; height:0; border-left:22px solid transparent; border-right:22px solid transparent; border-top:46px solid #fdb022; filter:drop-shadow(0 4px 2px #0007); margin-bottom:-13px; }
+.wheel-label {
+  position:absolute;
+  left:50%;
+  top:50%;
+  width:34%;
+  margin-left:-17%;
+  text-align:center;
+  font-size:clamp(11px,2.6vw,14px);
+  line-height:1.15;
+  font-weight:900;
+  letter-spacing:.5px;
+  color:#fff;
+  transform-origin:center center;
+  transform:rotate(var(--angle)) translateY(calc(-1 * var(--label-offset))) rotate(calc(-1 * var(--angle)));
+  pointer-events:none;
+  z-index:1;
+}
+.status { min-height:48px; margin:34px 0 5px; max-width:410px; font-size:19px; font-weight:700; }.stock { margin:0 0 20px; color:#b8c5dc; font-size:13px; }button { border:0; border-radius:13px; width:min(100%,360px); padding:18px 22px; font-weight:900; letter-spacing:.6px; cursor:pointer; background:#fdb022; color:#101828; font-size:16px; box-shadow:0 8px 20px #0004; }button span { margin-left:12px; opacity:.7; }button:disabled { opacity:.6; cursor:wait; }.secondary { margin-top:12px; color:#fff; background:transparent; border:1px solid #8190aa; box-shadow:none; }footer { color:#91a0ba; font-size:12px; }@media (max-width:420px){.app-shell{padding-inline:16px}.wheel{width:82vw}}

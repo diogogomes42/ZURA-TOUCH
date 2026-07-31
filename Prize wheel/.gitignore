@@ -1,0 +1,23 @@
+*.iml
+.gradle
+build/
+local.properties
+.idea/
+*.apk
+*.aab
+*.ap_
+.DS_Store
+captures/
+.externalNativeBuild
+.cxx
+output.json
+gradle-*.txt
+
+# Android subproject
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+
+# OS / IDE
+*.log
