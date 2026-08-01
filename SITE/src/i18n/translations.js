@@ -192,7 +192,7 @@ export const translations = {
       thanksSub: "We'll get back to you within 24 hours.",
     },
     footer: {
-      description: "Gamified entertainment platform. Play. Win. Repeat.",
+      description: "Every Purchase Feels Like a Win",
       navigation: "Navigation",
       contact: "Contact",
       legal: "Legal",
@@ -425,7 +425,7 @@ export const translations = {
       thanksSub: "Responderemos em até 24 horas.",
     },
     footer: {
-      description: "Plataforma de entretenimento gamificado. Joga. Ganha. Repete.",
+      description: "Cada compra parece uma vitória.",
       navigation: "Navegação",
       contact: "Contacto",
       legal: "Legal",

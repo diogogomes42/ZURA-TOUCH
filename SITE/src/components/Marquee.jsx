@@ -1,4 +1,4 @@
-export function Marquee({ text = "SMART VENDING ✦ INTERACTIVE ✦ REVENUE ✦ NIGHTLIFE ✦", className = "" }) {
+export function Marquee({ text = "EVERY PURCHASE FEELS LIKE A WIN ✦ PLAY ✦ WIN ✦ REPEAT ✦", className = "" }) {
   const content = `${text} `
   const repeated = content.repeat(12)
   return (
