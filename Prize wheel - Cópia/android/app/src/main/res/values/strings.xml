@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Zura Touch</string>
+    <string name="brand_title">ZURA TOUCH</string>
+    <string name="mystery_box">Mystery Box</string>
+    <string name="idle_prompt">Gira a roda e descobre a tua Mystery Box.</string>
+    <string name="spin_cta">GIRAR E GANHAR</string>
+    <string name="finish_cta">TERMINAR</string>
+    <string name="back_cta">VOLTAR</string>
+    <string name="payment_pending">A confirmar pagamento…</string>
+    <string name="spinning">A roda está a girar…</string>
+    <string name="dispensing">A preparar o seu prémio…</string>
+    <string name="prize_won">Parabéns! Ganhou %1$s.</string>
+    <string name="prize_congrats">PARABÉNS!</string>
+    <string name="prize_subtitle">O seu prémio está pronto. Retire-o abaixo.</string>
+    <string name="auto_return_hint">A voltar automaticamente em breve…</string>
+    <string name="error_generic">Ocorreu um erro.</string>
+    <string name="no_prizes">Não há prémios disponíveis.</string>
+    <string name="no_stock">Sem prémios disponíveis</string>
+</resources>

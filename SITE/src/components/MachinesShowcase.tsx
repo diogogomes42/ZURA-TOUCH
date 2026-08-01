@@ -221,27 +221,17 @@ export function MachinesShowcase() {
               className="absolute inset-0 -m-10 rounded-[3rem] bg-gradient-to-br from-purple-500/25 via-pink-500/10 to-transparent blur-3xl pointer-events-none"
               aria-hidden
             />
-            <motion.div
-              className="relative rounded-[2.25rem] border border-white/5 bg-black px-4 sm:px-6 py-6 sm:py-8 overflow-visible"
-              initial={{ opacity: 0, y: 32, scale: 0.96 }}
-              whileInView={{ opacity: 1, y: 0, scale: 1 }}
-              viewport={{ once: true, amount: 0.3 }}
-              transition={{ duration: 0.7, ease: "easeOut" }}
-            >
-              <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_20%,rgba(168,85,247,0.15),transparent_55%)] pointer-events-none" />
-
-              <motion.img
-                key={activeMachine.image}
-                src={activeMachine.image}
-                alt={activeMachine.title}
-                loading="lazy"
-                decoding="async"
-                className="relative z-10 mx-auto max-h-[460px] sm:max-h-[500px] lg:max-h-[540px] w-auto object-contain"
-                initial={{ opacity: 0, y: 24, scale: 0.94 }}
-                animate={{ opacity: 1, y: 0, scale: machineImageScale }}
-                transition={{ duration: 0.4, ease: "easeOut" }}
-              />
-            </motion.div>
+            <motion.img
+              key={activeMachine.image}
+              src={activeMachine.image}
+              alt={activeMachine.title}
+              loading="lazy"
+              decoding="async"
+              className="relative z-10 mx-auto max-h-[460px] sm:max-h-[500px] lg:max-h-[540px] w-auto object-contain drop-shadow-[0_40px_80px_rgba(0,0,0,0.8)]"
+              initial={{ opacity: 0, y: 24, scale: 0.94 }}
+              animate={{ opacity: 1, y: 0, scale: machineImageScale }}
+              transition={{ duration: 0.4, ease: "easeOut" }}
+            />
           </div>
         </motion.div>
       </div>

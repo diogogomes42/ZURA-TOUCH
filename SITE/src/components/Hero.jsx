@@ -87,23 +87,20 @@ export function Hero() {
                     "radial-gradient(circle, rgba(168, 85, 247, 0.4) 0%, rgba(236, 72, 153, 0.2) 40%, transparent 70%)",
                 }}
               />
-              <div className="relative rounded-[2rem] sm:rounded-[2.5rem] p-4 sm:p-6 overflow-hidden bg-black/90 border border-white/5">
-                <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_30%,rgba(168,85,247,0.2),transparent_60%)] pointer-events-none" />
-                <motion.img
-                  src="/Images/zura.png"
-                  alt="Zura Touch machine"
-                  fetchPriority="high"
-                  decoding="async"
-                  className="relative z-10 mx-auto w-full max-h-[50vh] sm:max-h-[55vh] lg:max-h-[65vh] object-contain drop-shadow-[0_40px_80px_rgba(0,0,0,0.8)]"
-                  initial={{ opacity: 0, y: 20, scale: 0.96 }}
-                  animate={{ opacity: 1, y: [0, -10, 0], scale: 1 }}
-                  transition={{
-                    opacity: { duration: 0.85 },
-                    y: { duration: 6, repeat: Infinity, ease: "easeInOut" },
-                    scale: { duration: 0.85 },
-                  }}
-                />
-              </div>
+              <motion.img
+                src="/Images/zura.png"
+                alt="Zura Touch machine"
+                fetchPriority="high"
+                decoding="async"
+                className="relative z-10 mx-auto w-full max-h-[50vh] sm:max-h-[55vh] lg:max-h-[65vh] object-contain drop-shadow-[0_40px_80px_rgba(0,0,0,0.8)]"
+                initial={{ opacity: 0, y: 20, scale: 0.96 }}
+                animate={{ opacity: 1, y: [0, -10, 0], scale: 1 }}
+                transition={{
+                  opacity: { duration: 0.85 },
+                  y: { duration: 6, repeat: Infinity, ease: "easeInOut" },
+                  scale: { duration: 0.85 },
+                }}
+              />
             </div>
           </motion.div>
         </div>

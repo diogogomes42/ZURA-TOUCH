@@ -1,0 +1,9 @@
+# Zura Touch branding assets
+
+Coloca aqui:
+
+- Logo principal (SVG/PNG)
+- Mystery Box lockup
+- Guia de cores e tipografia
+
+Os ficheiros desta pasta são a **fonte de verdade** para o design; a app Android consome cópias em `android/app/src/main/res/`.
