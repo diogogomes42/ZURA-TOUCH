@@ -230,6 +230,8 @@ export const translations = {
     },
     meta: {
       title: "Zura Touch | Play. Win. Repeat.",
+      description:
+        "Every Purchase Feels Like a Win. Zura Touch is a gamified entertainment platform where players pay to play, spin the wheel, and win real prizes.",
     },
   },
   pt: {
@@ -463,6 +465,8 @@ export const translations = {
     },
     meta: {
       title: "Zura Touch | Joga. Ganha. Repete.",
+      description:
+        "Cada compra parece uma vitória. A Zura Touch é uma plataforma de entretenimento gamificado onde os jogadores pagam para jogar, giram a roleta e ganham prémios reais.",
     },
   },
 }

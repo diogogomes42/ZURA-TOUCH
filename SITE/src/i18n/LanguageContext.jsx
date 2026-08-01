@@ -24,9 +24,33 @@ export function LanguageProvider({ children }) {
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, lang)
     document.documentElement.lang = lang === "pt" ? "pt-PT" : "en"
-    const title = translations[lang].meta.title
+    const { title, description } = translations[lang].meta
     if (document.title !== title) {
       document.title = title
+    }
+    if (description) {
+      let metaDescription = document.querySelector('meta[name="description"]')
+      if (!metaDescription) {
+        metaDescription = document.createElement("meta")
+        metaDescription.setAttribute("name", "description")
+        document.head.appendChild(metaDescription)
+      }
+      metaDescription.setAttribute("content", description)
+
+      for (const [property, value] of [
+        ["og:title", title],
+        ["og:description", description],
+        ["twitter:title", title],
+        ["twitter:description", description],
+      ]) {
+        let tag = document.querySelector(`meta[property="${property}"], meta[name="${property}"]`)
+        if (!tag) {
+          tag = document.createElement("meta")
+          tag.setAttribute(property.startsWith("twitter:") ? "name" : "property", property)
+          document.head.appendChild(tag)
+        }
+        tag.setAttribute("content", value)
+      }
     }
   }, [lang])
 
