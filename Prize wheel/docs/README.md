@@ -1,23 +1,30 @@
 # Documentação
 
-Coloca aqui PDFs, especificações e documentação do projeto.
-
-## Ficheiros esperados
-
 | Documento | Descrição |
 |-----------|-----------|
-| `SRS-v0.1.pdf` | Software Requirements Specification |
-| `UX-flow.pdf` | Fluxos de utilizador |
-| `deployment.md` | Guia de instalação no quiosque |
+| [`deployment.md`](deployment.md) | Instalação em campo — 2 APKs, shared DB, launcher, CI |
+| [`../hardware/README.md`](../hardware/README.md) | UART, VMC, layout da máquina |
+| [`../android/README.md`](../android/README.md) | Build, módulos, arquitetura |
 
-## SRS v0.1 (resumo)
+## Arquitetura (resumo)
 
-**Objetivo:** App Android nativa para vending machine com experiência Spin-to-Win (Mystery Box).
+- **2 apps:** Cliente (`com.zuratouch.customer`) + Operador (`com.zuratouch.operator`)
+- **Experiência configurável:** `WHEEL` | `CARDS` em Room (`AppConfig.experienceMode`, v8)
+- **Cartas:** 24 prémios reais, 1 slot premium, escolha determina outcome
+- **Analytics local:** taxa de pick do slot premium vs 1/24 — tab Registos no Operador
 
-**Fluxo:** Idle → Compra → Pagamento → Categoria → Dispense → Reveal → Stock → Idle
+## Tags sugeridas
 
-**Tecnologias:** Kotlin, Jetpack Compose, Room, UART/VMC
+| Tag | Estado |
+|-----|--------|
+| `v0.1-stable` | Monólito original |
+| `v1.0.0-customer-wheel-only` | Pós Phase 4 |
+| `v1.0.0-cards-mvp` | Roleta + Cartas MVP (Phase 6–7) |
 
-**Fora de scope v0.1:** Cloud, loyalty, analytics, multi-idioma (ver SRS §5).
+## SRS v0.1
 
-> Adiciona os PDFs oficiais (UART, VMC) quando os tiveres — cópias de referência também podem ir para [`../hardware/`](../hardware/).
+Objetivo: app Android para vending com Spin-to-Win / Mystery Box.
+
+Tecnologias: Kotlin, Compose, Room, UART/VMC.
+
+Fora de scope v0.1: cloud, loyalty, analytics remota, multi-idioma.

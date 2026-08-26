@@ -1,54 +1,78 @@
-# Android – Zura Touch Prize Wheel
+# Android – Zura Touch
 
-Aplicação nativa Android (Kotlin + Jetpack Compose) para o experience Spin-to-Win.
+Duas apps Android (Kotlin + Jetpack Compose) para quiosques de vending com experiência **Roleta** ou **Cartas**.
+
+## Apps
+
+| Módulo | ID | Versão | Função |
+|--------|-----|--------|--------|
+| `app-customer` | `com.zuratouch.customer` | 1.0.0 | Ecrã do cliente (kiosk) |
+| `app-operator` | `com.zuratouch.operator` | 1.0.0 | Gestão, stock, modo de experiência |
+
+Ambas partilham `sharedUserId` + base Room `zura_touch.db`.
+
+## Estrutura
+
+```
+android/
+├── app-customer/       ExperienceHost → Roleta | Cartas
+├── app-operator/       Tabs operador + selector de experiência
+├── feature/
+│   ├── sale-wheel/     UI + VM da roleta
+│   └── sale-cards/     UI + VM das cartas
+└── core/
+    ├── domain/         PrizeEngine, CardBoardGenerator, CardsAnalytics
+    ├── data/           Room v8, StockRepository
+    ├── hardware/       Bootstrap, heartbeat
+    ├── payment/        PaymentTerminal
+    ├── vending/        VMC / UART
+    └── feedback/       Som e haptics
+```
 
 ## Requisitos
 
-- Android Studio (Ladybug ou superior)
+- Android Studio Ladybug+
 - JDK 17
 - Android SDK API 35
 
-## Build
+Abrir **`android/`** no Android Studio (não a raiz do monorepo).
 
-Abre **esta pasta** (`android/`) no Android Studio e sincroniza o Gradle.
+## Build & testes
 
 ```bash
 cd android
-gradle assembleDebug test
+./gradlew testDebugUnitTest :app-customer:assembleDebug :app-operator:assembleDebug
 ```
 
-Debug usa hardware simulado (`USE_FAKE_HARDWARE=true`). Release comunica via UART com o controlador VMC.
+Debug usa hardware simulado. Release usa UART/VMC real.
 
-**Room:** migrações explícitas v1→v3; `fallbackToDestructiveMigration()` só em debug. Schemas exportados em `app/schemas/` (versionar no git).
+## CI
 
-## Funcionalidades (v0.1)
+GitHub Actions constrói ambas as apps e corre testes unitários — ver [`../../.github/workflows/android-ci.yml`](../../.github/workflows/android-ci.yml).
 
-- Roda de prémios 3D com animação e categorias dinâmicas
-- Pagamento VMC cashless + dispense com confirmação
-- Stock persistente (Room) e histórico de vendas
-- Ecrã de operador (long-press no logo; PIN obrigatório na primeira utilização)
-- Som, vibração, categorias ponderadas, fallback de dispense
+## Instalação em campo
 
-## Arquitetura
-
-```
-app/src/main/java/com/zuratouch/prizewheel/
-├── data/       Room + StockRepository
-├── domain/     PrizeWheelEngine, models
-├── payment/    PaymentTerminal
-├── vending/    VMC UART + protocolo
-├── feedback/   Som e haptics
-└── ui/         Compose screens + ViewModels
-```
+Ver [`../docs/deployment.md`](../docs/deployment.md) — assinatura partilhada, instalação dos 2 APKs, launcher, UART.
 
 ## Operador
 
-Long-press em **ZURA TOUCH** → PIN de operador (criar na primeira utilização, mín. 6 dígitos) → Stock / Config / Histórico / Diagnóstico.
+App **Operador** (separada): PIN → Prémios / Stock / Máquina / **Experiência** / Registos.
+
+A app Cliente **não** tem ecrã de operador.
+
+## Experiências (cliente)
+
+| Modo | Fluxo |
+|------|--------|
+| **Roleta** | Pay → spin (cosmético) → dispense planeado |
+| **Cartas** | Pay → tabuleiro 24 → escolha → dispense da carta |
+
+Troca de modo só quando idle (sem pagamento/jogo/entrega ativos).
 
 ## Hardware
 
-Ver [`../hardware/`](../hardware/) para protocolo UART e mapeamento de corredores.
+[`../hardware/`](../hardware/) — protocolo UART/VMC.
 
 ## Protótipo visual
 
-Referência UX em [`../prototype/`](../prototype/).
+[`../prototype/`](../prototype/) — referência UX da roleta.

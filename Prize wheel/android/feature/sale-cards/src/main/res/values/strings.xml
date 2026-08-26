@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="brand_title">ZURA TOUCH</string>
+    <string name="cards_play_cta">JOGAR CARTAS</string>
+    <string name="cards_pick_hint">Escolha uma carta</string>
+    <string name="cards_dealing">A baralhar as cartas…</string>
+    <string name="cards_idle_hint">Prémios disponíveis na máquina. Paga para baralhar e escolher.</string>
+    <string name="cards_unavailable">Modo cartas indisponível — reponha stock.</string>
+    <string name="payment_pending">A confirmar pagamento…</string>
+    <string name="dispensing">A preparar o seu prémio…</string>
+    <string name="prize_congrats">PARABÉNS!</string>
+    <string name="prize_subtitle">O seu prémio está pronto. Retire-o abaixo.</string>
+    <string name="finish_cta">TERMINAR</string>
+    <string name="auto_return_hint">A voltar automaticamente em breve…</string>
+    <string name="back_cta">VOLTAR</string>
+    <string name="error_generic">Ocorreu um erro.</string>
+    <string name="hardware_degraded_banner">Hardware indisponível (%1$s): %2$s</string>
+    <string name="card_face_down">?</string>
+</resources>

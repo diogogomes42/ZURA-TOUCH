@@ -15,4 +15,13 @@ dependencyResolutionManagement {
 }
 
 rootProject.name = "ZuraTouchPrizeWheel"
-include(":app")
+include(":app-customer")
+include(":app-operator")
+include(":feature:sale-wheel")
+include(":feature:sale-cards")
+include(":core:domain")
+include(":core:data")
+include(":core:hardware")
+include(":core:payment")
+include(":core:vending")
+include(":core:feedback")

@@ -1,16 +1,16 @@
 # Zura Touch – Prize Wheel
 
-Monorepo do projeto **Spin-to-Win** para máquinas de vending Zura Touch.
+Monorepo do projeto **Spin-to-Win / Cartas** para máquinas de vending Zura Touch.
 
 ## Estrutura
 
 ```
-PrizeWheel/
-├── android/      → Aplicação Android (Kotlin + Compose)
+Prize wheel/
+├── android/      → 2 apps (Cliente + Operador) + core + features
 ├── prototype/    → Protótipo HTML/CSS/JS (referência visual)
-├── docs/         → Documentação e especificações
-├── hardware/     → Protocolos UART/VMC, MDB, esquemas
-├── assets/       → Logos, ícones e imagens de marca
+├── docs/         → Deployment, especificações
+├── hardware/     → Protocolos UART/VMC
+├── assets/       → Logos e branding
 └── README.md
 ```
 
@@ -18,20 +18,20 @@ PrizeWheel/
 
 | O que queres fazer | Onde ir |
 |--------------------|---------|
-| Desenvolver / compilar a app | [`android/`](android/) |
-| Ver o protótipo visual da roda | [`prototype/index.html`](prototype/index.html) |
-| Consultar a especificação | [`docs/`](docs/) |
-| Integrar com a máquina | [`hardware/`](hardware/) |
-| Atualizar branding | [`assets/`](assets/) |
+| Desenvolver / compilar | [`android/`](android/) |
+| Instalar no quiosque (2 APKs) | [`docs/deployment.md`](docs/deployment.md) |
+| Ver protótipo da roda | [`prototype/index.html`](prototype/index.html) |
+| Integrar hardware | [`hardware/`](hardware/) |
 
 ## Android Studio
 
-Abre a pasta **`android/`** (não a raiz do monorepo):
+Abre **`Prize wheel/android/`**:
 
 ```
-File → Open → PrizeWheel/android
+File → Open → …/ZURA TOUCH/Prize wheel/android
 ```
 
 ## Versão
 
-SRS v0.1 — Mystery Box com roda de prémios, pagamento VMC cashless e gestão de stock.
+**v1.0.0** — Cliente dual experience (Roleta + Cartas), Operador separado, CI dual-APK.
+
