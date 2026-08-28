@@ -3,8 +3,9 @@ package com.zuratouch.prizewheel.domain
 import kotlin.random.Random
 
 /**
- * Builds a shuffled [cardCount]-card board where every slot maps to a real [DispensePlan].
- * Exactly [CardBoardRules.targetSlotCount] slot(s) carry the weighted premium/target outcome.
+ * Builds a shuffled [cardCount]-card board.
+ * Faces show the full [PrizeProductCatalog] shuffled; exactly one target slot maps to a real
+ * [DispensePlan] drawn from current machine stock.
  */
 class CardBoardGenerator(
     private val prizeEngine: PrizeEngine,
@@ -32,14 +33,16 @@ class CardBoardGenerator(
         if (pool.isEmpty()) return null
 
         val categoryById = categories.associateBy { it.id }
+        val fallbackPlan = pool[random.nextInt(pool.size)]
+        val decoyProducts = buildDecoyProducts(rules.cardCount - rules.targetSlotCount, random)
         val unshuffled = mutableListOf<CardSlot>()
 
-        repeat(rules.cardCount - rules.targetSlotCount) {
-            val plan = samplePlanFromPool(categories, pool, random) ?: return null
-            val category = categoryById[plan.product.categoryId] ?: return null
+        decoyProducts.forEach { displayProduct ->
+            val category = displayCategoryFor(displayProduct, categoryById, targetCategory)
             unshuffled += CardSlot(
                 index = -1,
-                dispensePlan = plan,
+                dispensePlan = fallbackPlan,
+                displayProduct = displayProduct,
                 category = category,
                 isTargetSlot = false,
             )
@@ -49,6 +52,7 @@ class CardBoardGenerator(
             unshuffled += CardSlot(
                 index = -1,
                 dispensePlan = targetPlan,
+                displayProduct = targetPlan.product,
                 category = targetCategory,
                 isTargetSlot = true,
             )
@@ -65,21 +69,47 @@ class CardBoardGenerator(
         )
     }
 
+    private fun buildDecoyProducts(count: Int, random: Random): List<QueuedProduct> {
+        if (count <= 0) return emptyList()
+        val catalog = PrizeProductCatalog.allProducts().shuffled(random)
+        return List(count) { index ->
+            catalog[index % catalog.size]
+        }.shuffled(random)
+    }
+
     private fun deliverablePlans(stock: List<Spiral>): List<DispensePlan> =
         stock.mapNotNull { spiral ->
             val product = spiral.frontProduct ?: return@mapNotNull null
             DispensePlan(spiral, product)
         }
 
-    private fun samplePlanFromPool(
-        categories: List<PrizeCategory>,
-        pool: List<DispensePlan>,
-        random: Random,
-    ): DispensePlan? {
-        val availableIds = pool.map { it.product.categoryId }.toSet()
-        val weighted = categories.filter { it.id in availableIds }
-        val picked = prizeEngine.pickWeightedCategory(weighted) ?: return null
-        val matching = pool.filter { it.product.categoryId == picked.id }
-        return matching[random.nextInt(matching.size)]
+    private fun displayCategoryFor(
+        product: QueuedProduct,
+        categoryById: Map<String, PrizeCategory>,
+        fallback: PrizeCategory,
+    ): PrizeCategory = categoryById[product.categoryId] ?: PrizeCategory(
+        id = product.categoryId,
+        label = catalogLabelFor(product.categoryId),
+        color = catalogColorFor(product.categoryId),
+        weight = fallback.weight,
+        icon = fallback.icon,
+    )
+
+    private fun catalogLabelFor(categoryId: String): String = when (categoryId) {
+        PrizeProductCatalog.COMMON -> "Comum"
+        PrizeProductCatalog.RARE -> "Raro"
+        PrizeProductCatalog.EPIC -> "Épico"
+        PrizeProductCatalog.LEGENDARY -> "Lendário"
+        PrizeProductCatalog.MYTHIC -> "Mítico"
+        else -> categoryId
+    }
+
+    private fun catalogColorFor(categoryId: String): Long = when (categoryId) {
+        PrizeProductCatalog.COMMON -> 0xFF718096
+        PrizeProductCatalog.RARE -> 0xFF3182CE
+        PrizeProductCatalog.EPIC -> 0xFF805AD5
+        PrizeProductCatalog.LEGENDARY -> 0xFFD69E2E
+        PrizeProductCatalog.MYTHIC -> 0xFFE53E3E
+        else -> 0xFF718096
     }
 }

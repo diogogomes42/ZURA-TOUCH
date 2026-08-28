@@ -1,15 +1,16 @@
 package com.zuratouch.prizewheel.data
 
+import com.zuratouch.prizewheel.domain.PrizeProductCatalog
 import com.zuratouch.prizewheel.domain.QueuedProduct
 import kotlin.random.Random
 
 /** Official prize catalog — product names per wheel category. */
 object PrizeCatalog {
-    const val COMMON = "common"
-    const val RARE = "rare"
-    const val EPIC = "epic"
-    const val LEGENDARY = "legendary"
-    const val MYTHIC = "mythic"
+    const val COMMON = PrizeProductCatalog.COMMON
+    const val RARE = PrizeProductCatalog.RARE
+    const val EPIC = PrizeProductCatalog.EPIC
+    const val LEGENDARY = PrizeProductCatalog.LEGENDARY
+    const val MYTHIC = PrizeProductCatalog.MYTHIC
 
     val categoryWeights = listOf(
         COMMON to 50,
@@ -19,63 +20,13 @@ object PrizeCatalog {
         MYTHIC to 3,
     )
 
-    val commonProducts = listOf(
-        "Pato de Borracha",
-        "Porta-chaves",
-        "Livro",
-        "Mini Ventoinha",
-        "Meias",
-        "Boné",
-        "Saco Reutilizável",
-    )
+    val commonProducts = PrizeProductCatalog.commonProducts
+    val rareProducts = PrizeProductCatalog.rareProducts
+    val epicProducts = PrizeProductCatalog.epicProducts
+    val legendaryProducts = PrizeProductCatalog.legendaryProducts
+    val mythicProducts = PrizeProductCatalog.mythicProducts
 
-    val rareProducts = listOf(
-        "Garrafa Reutilizável",
-        "Cartas Pokémon",
-        "Peluche",
-        "Cartão Presente (5€–10€)",
-        "Auriculares",
-        "Kit de Beleza",
-        "Livro Premium",
-    )
-
-    val epicProducts = listOf(
-        "Funko Pop",
-        "Headphones",
-        "Teclado Gaming",
-        "Rato Gaming",
-        "Smartband",
-        "Power Bank",
-        "Cartão Presente (20€–50€)",
-    )
-
-    val legendaryProducts = listOf(
-        "Jantar para Duas Pessoas",
-        "Bilhetes para Concerto",
-        "Camisola Oficial de Futebol",
-        "Experiência de Aventura",
-        "Noite em Hotel",
-        "Bilhetes para Parque Temático",
-    )
-
-    val mythicProducts = listOf(
-        "iPhone",
-        "Viagem",
-        "AirPods",
-        "MacBook",
-        "Trotinete Elétrica",
-        "Bicicleta Elétrica",
-        "Câmara GoPro",
-    )
-
-    fun productsFor(categoryId: String): List<String> = when (categoryId) {
-        COMMON -> commonProducts
-        RARE -> rareProducts
-        EPIC -> epicProducts
-        LEGENDARY -> legendaryProducts
-        MYTHIC -> mythicProducts
-        else -> emptyList()
-    }
+    fun productsFor(categoryId: String): List<String> = PrizeProductCatalog.productsFor(categoryId)
 
     /**
      * Builds [count] units for the test machine, spread across categories using the same

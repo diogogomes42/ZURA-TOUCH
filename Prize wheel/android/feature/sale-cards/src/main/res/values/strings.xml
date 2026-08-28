@@ -4,6 +4,14 @@
     <string name="cards_play_cta">JOGAR CARTAS</string>
     <string name="cards_pick_hint">Escolha uma carta</string>
     <string name="cards_dealing">A baralhar as cartas…</string>
+    <string name="cards_revealing">O seu prémio!</string>
+    <string name="cards_reveal_legend">Revele todas as cartas e compare os prémios</string>
+    <string name="cards_near_miss_title">ESTUVE PERTO!</string>
+    <string name="cards_near_miss_subtitle">Prémio máximo (%1$s) · Ganhou: %2$s</string>
+    <string name="cards_jackpot_win_title">ACERTOU NO PRÉMIO MÁXIMO</string>
+    <string name="cards_badge_your_pick">A SUA ESCOLHA</string>
+    <string name="cards_badge_jackpot">PRÉMIO MÁXIMO</string>
+    <string name="cards_badge_jackpot_pick">ACERTOU O MÁXIMO!</string>
     <string name="cards_idle_hint">Prémios disponíveis na máquina. Paga para baralhar e escolher.</string>
     <string name="cards_unavailable">Modo cartas indisponível — reponha stock.</string>
     <string name="payment_pending">A confirmar pagamento…</string>

@@ -43,4 +43,13 @@ class AvailablePrizesTest {
         val orderB = AvailablePrizes.fromStock(categories, stock, Random(99)).map { it.productName }
         assertNotEquals(orderA, orderB)
     }
+
+    @Test
+    fun `fromStock caps at 24 products`() {
+        val stock = List(30) { index ->
+            Spiral("S$index", 1, 1, 1, 10, listOf(QueuedProduct("common", "Produto $index")))
+        }
+        val prizes = AvailablePrizes.fromStock(categories, stock, Random(1))
+        assertEquals(24, prizes.size)
+    }
 }

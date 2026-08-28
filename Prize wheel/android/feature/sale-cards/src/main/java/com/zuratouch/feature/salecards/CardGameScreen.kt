@@ -50,7 +50,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.zuratouch.feature.salecards.components.AnimatedCardBoard
 import com.zuratouch.feature.salecards.components.HardwareDegradedBanner
-import com.zuratouch.feature.salecards.components.PrizeRevealOverlay
 import com.zuratouch.feature.salecards.components.PrizeShowcaseGrid
 import com.zuratouch.feature.salecards.theme.ZuraColors
 import com.zuratouch.prizewheel.domain.SaleState
@@ -95,52 +94,63 @@ fun CardGameScreen(
                     modifier = Modifier.padding(bottom = 12.dp),
                 )
             }
-            BrandHeader(mysteryBoxLabel = state.mysteryBoxLabel)
+            BrandHeader()
             Spacer(modifier = Modifier.height(24.dp))
             Column(
                 modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.Top,
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                if (state.saleState == SaleState.PLAYING) {
+                if (state.saleState == SaleState.PLAYING || state.saleState == SaleState.DISPENSING) {
                     StatusSection(state = state, dealComplete = dealComplete)
                     Spacer(modifier = Modifier.height(12.dp))
                 }
-                when (state.saleState) {
-                    SaleState.PLAYING -> {
+                val showBoard = state.board != null &&
+                    (state.saleState == SaleState.PLAYING || state.saleState == SaleState.DISPENSING)
+                when {
+                    showBoard -> {
                         state.board?.let { board ->
                             AnimatedCardBoard(
                                 slots = board.slots,
                                 selectedIndex = state.selectedCardIndex,
                                 onSelect = viewModel::selectCard,
-                                selectionEnabled = dealComplete,
+                                selectionEnabled = dealComplete && state.saleState == SaleState.PLAYING,
                                 onDealComplete = { dealComplete = true },
+                                onRevealComplete = viewModel::onRevealAnimationComplete,
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .weight(1f),
                             )
                         }
                     }
-                    else -> {
-                        if (state.saleState == SaleState.IDLE && state.canPlay) {
+                    state.saleState == SaleState.IDLE && state.availablePrizes.isNotEmpty() -> {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .weight(1f),
+                            contentAlignment = Alignment.TopCenter,
+                        ) {
                             PrizeShowcaseGrid(
                                 prizes = state.availablePrizes,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .weight(1f),
+                                modifier = Modifier.fillMaxSize(),
                             )
                         }
                     }
                 }
-                if (state.saleState != SaleState.PLAYING) {
+                if (state.saleState != SaleState.PLAYING &&
+                    state.saleState != SaleState.DISPENSING &&
+                    state.saleState != SaleState.PAYMENT_PENDING
+                ) {
                     Spacer(modifier = Modifier.height(28.dp))
                     StatusSection(state = state, dealComplete = dealComplete)
                 }
                 Spacer(modifier = Modifier.height(20.dp))
+                val showFinish = state.selectedCardIndex != null &&
+                    (state.saleState == SaleState.PLAYING || state.saleState == SaleState.DISPENSING)
                 when (state.saleState) {
                     SaleState.IDLE -> PlayButton(
                         priceCents = state.playPriceCents,
-                        enabled = state.canPlay,
+                        enabled = state.canPlay && !state.isBusy,
                         onClick = viewModel::startRound,
                     )
                     SaleState.ERROR -> {
@@ -156,45 +166,46 @@ fun CardGameScreen(
                             Text(stringResource(R.string.back_cta))
                         }
                     }
-                    else -> Unit
+                    else -> if (showFinish) {
+                        Button(
+                            onClick = viewModel::finishRound,
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = ZuraColors.Accent,
+                                contentColor = ZuraColors.BackgroundDark,
+                            ),
+                            shape = RoundedCornerShape(13.dp),
+                        ) {
+                            Text(
+                                stringResource(R.string.finish_cta),
+                                fontWeight = FontWeight.Black,
+                                letterSpacing = 0.6.sp,
+                            )
+                        }
+                    }
                 }
             }
         }
 
-        if (state.saleState == SaleState.REVEALING_PRIZE) {
-            PrizeRevealOverlay(
-                prizeName = state.revealedPrize.orEmpty(),
-                visible = true,
-                onFinish = viewModel::returnToIdle,
-            )
-        }
     }
 }
 
 @Composable
-private fun BrandHeader(mysteryBoxLabel: String) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Image(
-            painter = painterResource(R.drawable.zura_touch_logo),
-            contentDescription = stringResource(R.string.brand_title),
-            modifier = Modifier
-                .widthIn(max = 200.dp)
-                .heightIn(min = 100.dp, max = 140.dp),
-            contentScale = ContentScale.Fit,
-        )
-        Text(
-            text = mysteryBoxLabel,
-            color = ZuraColors.Accent,
-            fontSize = 11.sp,
-            letterSpacing = 1.7.sp,
-            modifier = Modifier.padding(top = 4.dp),
-        )
-    }
+private fun BrandHeader() {
+    Image(
+        painter = painterResource(R.drawable.zura_touch_logo),
+        contentDescription = stringResource(R.string.brand_title),
+        modifier = Modifier
+            .widthIn(max = 200.dp)
+            .heightIn(min = 100.dp, max = 140.dp),
+        contentScale = ContentScale.Fit,
+    )
 }
 
 @Composable
 private fun StatusSection(state: CardGameUiState, dealComplete: Boolean) {
-    val showLoader = state.saleState == SaleState.PAYMENT_PENDING || state.saleState == SaleState.DISPENSING
+    if (state.saleState == SaleState.PAYMENT_PENDING) return
+    val showLoader = state.saleState == SaleState.DISPENSING
     val message = statusMessage(state, dealComplete)
     if (message.isBlank() && !showLoader) return
     Column(
@@ -240,9 +251,12 @@ private fun statusMessage(state: CardGameUiState, dealComplete: Boolean): String
         !state.canPlay -> state.message ?: stringResource(R.string.cards_unavailable)
         else -> stringResource(R.string.cards_idle_hint)
     }
-    SaleState.PAYMENT_PENDING -> state.message ?: stringResource(R.string.payment_pending)
+    SaleState.PAYMENT_PENDING -> ""
     SaleState.PLAYING -> when {
-        state.selectedCardIndex != null -> ""
+        state.selectedCardIndex != null -> when {
+            state.message != null -> state.message!!
+            else -> stringResource(R.string.cards_revealing)
+        }
         dealComplete -> stringResource(R.string.cards_pick_hint)
         else -> stringResource(R.string.cards_dealing)
     }

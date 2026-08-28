@@ -41,6 +41,7 @@ data class CardGameUiState(
     val revealedPrize: String? = null,
     val message: String? = null,
     val canPlay: Boolean = false,
+    val isBusy: Boolean = false,
 )
 
 class CardGameViewModel(
@@ -66,6 +67,7 @@ class CardGameViewModel(
     private var errorReturnJob: Job? = null
     private var revealReturnJob: Job? = null
     private var idleDisplayRandom: Random = Random(System.nanoTime())
+    private var dispenseStarted = false
 
     init {
         restoreSession()
@@ -110,18 +112,19 @@ class CardGameViewModel(
             return
         }
         isProcessing = true
+        _uiState.update { it.copy(isBusy = true) }
         paymentConfirmed = false
+        dispenseStarted = false
         feedbackManager.buttonTap()
         purchaseJob?.cancel()
         purchaseJob = viewModelScope.launch {
             try {
                 _uiState.update {
                     it.copy(
-                        saleState = SaleState.PAYMENT_PENDING,
-                        message = "A confirmar pagamento…",
                         selectedCardIndex = null,
                         revealedPrize = null,
                         board = null,
+                        message = null,
                     )
                 }
                 val paymentLane = resolvePaymentLane()
@@ -138,6 +141,7 @@ class CardGameViewModel(
                             paymentTerminal.refundPayment(playPriceCents, paymentLane)
                             isProcessing = false
                             paymentConfirmed = false
+                            _uiState.update { it.copy(isBusy = false) }
                             showError("Não foi possível gerar o tabuleiro.")
                             return@launch
                         }
@@ -149,6 +153,7 @@ class CardGameViewModel(
                                 saleState = SaleState.PLAYING,
                                 board = board,
                                 message = null,
+                                isBusy = false,
                             )
                         }
                         isProcessing = false
@@ -156,11 +161,13 @@ class CardGameViewModel(
                     PaymentResult.Cancelled -> {
                         logPaymentFailure("Pagamento cancelado", paymentLane)
                         isProcessing = false
+                        _uiState.update { it.copy(isBusy = false) }
                         showError("Pagamento cancelado.")
                     }
                     is PaymentResult.Failed -> {
                         logPaymentFailure(payment.reason, paymentLane)
                         isProcessing = false
+                        _uiState.update { it.copy(isBusy = false) }
                         showError(payment.reason)
                     }
                 }
@@ -177,16 +184,43 @@ class CardGameViewModel(
         val slot = session.board.slots.firstOrNull { it.index == index } ?: return
         isProcessing = true
         feedbackManager.buttonTap()
+        feedbackManager.win()
         val updatedSession = session.copy(selectedSlot = slot)
         activeSession = updatedSession
         persistSession(updatedSession)
         _uiState.update {
             it.copy(selectedCardIndex = index)
         }
-        viewModelScope.launch { dispense(slot) }
+    }
+
+    fun onRevealAnimationComplete() {
+        val session = activeSession ?: return
+        if (session.selectedSlot == null) return
+        val winSlot = session.board.slots.firstOrNull { it.isTargetSlot } ?: return
+        if (_uiState.value.saleState != SaleState.PLAYING || dispenseStarted) return
+        viewModelScope.launch { dispense(winSlot) }
+    }
+
+    fun finishRound() {
+        revealReturnJob?.cancel()
+        if (_uiState.value.revealedPrize != null) {
+            returnToIdle()
+            return
+        }
+        val winSlot = activeSession?.board?.slots?.firstOrNull { it.isTargetSlot }
+        if (winSlot != null && !dispenseStarted) {
+            viewModelScope.launch {
+                dispense(winSlot)
+                returnToIdle()
+            }
+        } else {
+            returnToIdle()
+        }
     }
 
     private suspend fun dispense(slot: CardSlot) {
+        if (dispenseStarted) return
+        dispenseStarted = true
         _uiState.update {
             it.copy(
                 saleState = SaleState.DISPENSING,
@@ -205,19 +239,18 @@ class CardGameViewModel(
                 result = SaleLogResult.SUCCESS,
                 message = buildSaleLogMessage(slot),
             )
-            feedbackManager.win()
             clearSession()
             _uiState.update {
                 it.copy(
-                    saleState = SaleState.REVEALING_PRIZE,
+                    saleState = SaleState.PLAYING,
                     revealedPrize = plan.product.productName,
-                    message = null,
+                    message = "Retire o seu prémio abaixo.",
                 )
             }
             isProcessing = false
             paymentConfirmed = false
             activeSession = null
-            scheduleRevealAutoReturn()
+            schedulePostWinReturn()
         } else {
             val refunded = paymentTerminal.refundPayment(playPriceCents, paymentLane)
             stockRepository.logSale(
@@ -279,6 +312,7 @@ class CardGameViewModel(
         activeSession = null
         paymentConfirmed = false
         isProcessing = false
+        dispenseStarted = false
         viewModelScope.launch {
             refreshStockFromRepository()
             applyIdleState()
@@ -328,11 +362,13 @@ class CardGameViewModel(
         }
     }
 
-    private fun scheduleRevealAutoReturn() {
+    private fun schedulePostWinReturn() {
         revealReturnJob?.cancel()
         revealReturnJob = viewModelScope.launch {
-            delay(REVEAL_AUTO_RETURN_MS)
-            if (_uiState.value.saleState == SaleState.REVEALING_PRIZE) returnToIdle()
+            delay(POST_WIN_RETURN_MS)
+            if (_uiState.value.saleState == SaleState.PLAYING && _uiState.value.revealedPrize != null) {
+                returnToIdle()
+            }
         }
     }
 
@@ -404,6 +440,6 @@ class CardGameViewModel(
 
     companion object {
         const val ERROR_AUTO_RETURN_MS = 8_000L
-        const val REVEAL_AUTO_RETURN_MS = 6_000L
+        const val POST_WIN_RETURN_MS = 5_000L
     }
 }

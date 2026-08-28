@@ -40,6 +40,14 @@ class CardBoardGeneratorTest {
     }
 
     @Test
+    fun `every slot has a display product`() {
+        val board = generator.generate(categories, wellStockedMachine())!!
+        board.slots.forEach { slot ->
+            assertTrue(slot.displayProduct.productName.isNotBlank())
+        }
+    }
+
+    @Test
     fun `every slot has a valid dispense plan`() {
         val board = generator.generate(categories, wellStockedMachine())!!
         board.slots.forEach { slot ->
@@ -66,15 +74,17 @@ class CardBoardGeneratorTest {
     }
 
     @Test
-    fun `handles low stock with duplicate plans on the board`() {
+    fun `decoy slots show shuffled catalog products beyond machine stock`() {
         val sparseStock = listOf(
             spiral("only", 1, 1, listOf(QueuedProduct("common", "Único"))),
             spiral("premium", 1, 2, listOf(QueuedProduct("premium", "Prémio"))),
         )
         val board = generator.generate(categories, sparseStock)!!
         assertEquals(24, board.slots.size)
-        assertTrue(board.slots.all { !it.dispensePlan.spiral.isEmpty })
-        assertTrue(board.slots.count { it.dispensePlan.spiral.id == "only" } > 1)
+        val machineProducts = sparseStock.flatMap { it.queue.map { product -> product.productName } }.toSet()
+        val decoyNames = board.slots.filter { !it.isTargetSlot }.map { it.displayProduct.productName }
+        assertTrue(decoyNames.any { it !in machineProducts })
+        assertTrue(decoyNames.distinct().size > 1)
     }
 
     @Test

@@ -60,6 +60,8 @@ object CardGameSessionCodec {
             .put("maxCapacity", plan.spiral.maxCapacity)
             .put("productCategoryId", plan.product.categoryId)
             .put("productName", plan.product.productName)
+            .put("displayCategoryId", slot.displayProduct.categoryId)
+            .put("displayProductName", slot.displayProduct.productName)
     }
 
     private fun decodeSlot(obj: JSONObject): CardSlot {
@@ -74,6 +76,14 @@ object CardGameSessionCodec {
             categoryId = obj.getString("productCategoryId"),
             productName = obj.getString("productName"),
         )
+        val displayProduct = if (obj.has("displayProductName")) {
+            QueuedProduct(
+                categoryId = obj.getString("displayCategoryId"),
+                productName = obj.getString("displayProductName"),
+            )
+        } else {
+            product
+        }
         val spiral = Spiral(
             id = obj.getString("spiralId"),
             shelf = obj.getInt("shelf"),
@@ -85,6 +95,7 @@ object CardGameSessionCodec {
         return CardSlot(
             index = obj.getInt("index"),
             dispensePlan = DispensePlan(spiral, product),
+            displayProduct = displayProduct,
             category = category,
             isTargetSlot = obj.getBoolean("isTargetSlot"),
         )

@@ -13,6 +13,8 @@ data class AvailablePrizeDisplay(
 )
 
 object AvailablePrizes {
+    const val MAX_SHOWCASE = 24
+
     /** Prémios únicos presentes nas filas da máquina (stock real). */
     fun fromStock(
         categories: List<PrizeCategory>,
@@ -34,6 +36,7 @@ object AvailablePrizes {
             }
             .distinctBy { it.productName }
             .shuffled(random)
+            .take(MAX_SHOWCASE)
             .toList()
     }
 }

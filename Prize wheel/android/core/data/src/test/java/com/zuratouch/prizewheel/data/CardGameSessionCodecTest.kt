@@ -41,6 +41,12 @@ class CardGameSessionCodecTest {
         val category = PrizeCategory("common", "Comum", 0xFF718096)
         val product = QueuedProduct("common", "Água")
         val spiral = Spiral("A1", 1, 1, 11, 10, listOf(product))
-        return CardSlot(index, DispensePlan(spiral, product), category, isTarget)
+        return CardSlot(
+            index,
+            DispensePlan(spiral, product),
+            displayProduct = product,
+            category,
+            isTarget,
+        )
     }
 }

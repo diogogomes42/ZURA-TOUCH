@@ -13,11 +13,20 @@ data class CardBoardRules(
 data class CardSlot(
     /** Position 0..23 after shuffle — the index the customer sees. */
     val index: Int,
+    /** Real dispense mapping — only the target slot is used when awarding the prize. */
     val dispensePlan: DispensePlan,
+    /** Product shown when the card is revealed (full catalog decoy or actual win on target). */
+    val displayProduct: QueuedProduct,
     val category: PrizeCategory,
     /** Exactly one slot per board carries the weighted premium/target outcome. */
     val isTargetSlot: Boolean,
-)
+) {
+    fun faceProduct(selectedIndex: Int?, winningProduct: QueuedProduct): QueuedProduct =
+        if (index == selectedIndex) winningProduct else displayProduct
+
+    fun faceCategory(selectedIndex: Int?, winningCategory: PrizeCategory): PrizeCategory =
+        if (index == selectedIndex) winningCategory else category
+}
 
 data class CardBoard(
     val slots: List<CardSlot>,

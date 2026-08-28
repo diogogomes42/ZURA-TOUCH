@@ -86,8 +86,13 @@ class CardGameViewModelTest {
 
         viewModel.selectCard(0)
         runCurrent()
+        assertEquals(SaleState.PLAYING, viewModel.uiState.value.saleState)
+        assertEquals(0, viewModel.uiState.value.selectedCardIndex)
 
-        assertEquals(SaleState.REVEALING_PRIZE, viewModel.uiState.value.saleState)
+        viewModel.onRevealAnimationComplete()
+        runCurrent()
+
+        assertEquals(SaleState.PLAYING, viewModel.uiState.value.saleState)
         assertNotNull(viewModel.uiState.value.revealedPrize)
         assertTrue(repository.deliveryRegistered)
     }
@@ -106,7 +111,8 @@ class CardGameViewModelTest {
         advanceUntilIdle()
         viewModel.selectCard(0)
         runCurrent()
-        advanceUntilIdle()
+        viewModel.onRevealAnimationComplete()
+        runCurrent()
 
         viewModel.returnToIdle()
         advanceUntilIdle()
@@ -129,7 +135,10 @@ class CardGameViewModelTest {
         viewModel.startRound()
         advanceUntilIdle()
 
-        assertEquals(SaleState.PAYMENT_PENDING, viewModel.uiState.value.saleState)
+        assertEquals(SaleState.IDLE, viewModel.uiState.value.saleState)
+        viewModel.startRound()
+        advanceUntilIdle()
+        assertEquals(SaleState.IDLE, viewModel.uiState.value.saleState)
     }
 
     private fun createViewModel(
