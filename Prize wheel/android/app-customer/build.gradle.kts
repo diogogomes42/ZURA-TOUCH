@@ -46,6 +46,7 @@ android {
 dependencies {
     implementation(project(":feature:sale-wheel"))
     implementation(project(":feature:sale-cards"))
+    implementation(project(":feature:direct-purchase"))
     implementation(project(":core:domain"))
     implementation(project(":core:data"))
     implementation(project(":core:hardware"))

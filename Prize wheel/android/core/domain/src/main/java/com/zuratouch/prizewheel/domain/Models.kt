@@ -71,4 +71,8 @@ data class SaleSession(
     val category: PrizeCategory,
     /** Categories frozen at sale creation so the wheel layout cannot drift during payment. */
     val wheelCategories: List<PrizeCategory>,
+    /** Set when the wheel sale uses a play tier (customer price + probability profile). */
+    val tierId: String? = null,
+    val tierPriceCents: Long? = null,
+    val legendaryWasGuaranteed: Boolean = false,
 )

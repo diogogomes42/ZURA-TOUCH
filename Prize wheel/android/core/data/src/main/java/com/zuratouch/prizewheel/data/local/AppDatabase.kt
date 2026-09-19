@@ -17,8 +17,9 @@ import com.zuratouch.prizewheel.data.SharedDatabase
         SpiralEntity::class,
         AppConfigEntity::class,
         SaleLogEntity::class,
+        DigitalPurchaseEntity::class,
     ],
-    version = 8,
+    version = 11,
     exportSchema = true,
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -26,6 +27,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun spiralDao(): SpiralDao
     abstract fun appConfigDao(): AppConfigDao
     abstract fun saleLogDao(): SaleLogDao
+    abstract fun digitalPurchaseDao(): DigitalPurchaseDao
 
     companion object {
         @Volatile
@@ -159,6 +161,48 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        private val MIGRATION_8_9 = object : Migration(8, 9) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("UPDATE categories SET weight = 7 WHERE id = 'mythic'")
+                db.execSQL("UPDATE categories SET weight = 3 WHERE id = 'legendary'")
+            }
+        }
+
+        private val MIGRATION_10_11 = object : Migration(10, 11) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS digital_purchases (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        timestampMs INTEGER NOT NULL,
+                        productName TEXT NOT NULL,
+                        categoryLabel TEXT NOT NULL,
+                        priceCents INTEGER NOT NULL,
+                        customerEmail TEXT NOT NULL,
+                        status TEXT NOT NULL
+                    )
+                    """.trimIndent(),
+                )
+            }
+        }
+
+        private val MIGRATION_9_10 = object : Migration(9, 10) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    "ALTER TABLE app_config ADD COLUMN jackpotAccumulatedRevenueCents INTEGER NOT NULL DEFAULT 0",
+                )
+                db.execSQL(
+                    "ALTER TABLE app_config ADD COLUMN jackpotEnabled INTEGER NOT NULL DEFAULT 1",
+                )
+                db.execSQL(
+                    """
+                    INSERT OR IGNORE INTO categories (id, label, color, weight, icon)
+                    VALUES ('basic', 'Básico', ${0xFFA0AEC0}, 60, '⬜')
+                    """.trimIndent(),
+                )
+            }
+        }
+
         internal val MIGRATIONS: Array<Migration> = arrayOf(
             MIGRATION_1_2,
             MIGRATION_2_3,
@@ -167,6 +211,9 @@ abstract class AppDatabase : RoomDatabase() {
             MIGRATION_5_6,
             MIGRATION_6_7,
             MIGRATION_7_8,
+            MIGRATION_8_9,
+            MIGRATION_9_10,
+            MIGRATION_10_11,
         )
 
         /** Shared by Customer and Operator apps on kiosk devices (same signing key + sharedUserId). */

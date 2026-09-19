@@ -26,6 +26,7 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -75,7 +76,6 @@ class CardGameViewModelTest {
 
         advanceUntilIdle()
         assertTrue(viewModel.uiState.value.canPlay)
-
         viewModel.startRound()
         advanceUntilIdle()
 
@@ -106,7 +106,6 @@ class CardGameViewModelTest {
 
         advanceUntilIdle()
         assertTrue(viewModel.uiState.value.availablePrizes.isNotEmpty())
-
         viewModel.startRound()
         advanceUntilIdle()
         viewModel.selectCard(0)
@@ -120,6 +119,38 @@ class CardGameViewModelTest {
         assertEquals(SaleState.IDLE, viewModel.uiState.value.saleState)
         assertTrue(viewModel.uiState.value.availablePrizes.isNotEmpty())
         assertTrue(repository.deliveryRegistered)
+    }
+
+    @Test
+    fun `startTrialRound skips payment and does not dispense`() = runTest {
+        val payment = RecordingPaymentTerminal(PaymentResult.Completed)
+        val vending = RecordingVendingMachine(DispenseResult.Delivered)
+        val repository = FakeStockDataSource(snapshot)
+        val viewModel = createViewModel(payment, vending, repository)
+
+        advanceUntilIdle()
+        assertTrue(viewModel.uiState.value.canPlay)
+        viewModel.startTrialRound()
+        advanceUntilIdle()
+
+        assertEquals(0, payment.requestCount)
+        assertTrue(viewModel.uiState.value.isTrialRound)
+        assertEquals(SaleState.PLAYING, viewModel.uiState.value.saleState)
+        assertNotNull(viewModel.uiState.value.board)
+
+        viewModel.selectCard(0)
+        runCurrent()
+        viewModel.onRevealAnimationComplete()
+        runCurrent()
+
+        assertEquals(SaleState.PLAYING, viewModel.uiState.value.saleState)
+        assertNotNull(viewModel.uiState.value.revealedPrize)
+        assertEquals(
+            CardGameViewModel.TRIAL_COMPLETE_MESSAGE,
+            viewModel.uiState.value.message,
+        )
+        assertFalse(repository.deliveryRegistered)
+        assertEquals(0, vending.dispenseCount)
     }
 
     @Test
@@ -219,6 +250,26 @@ private class FakeStockDataSource(initial: StockSnapshot) : StockDataSource {
     override suspend fun verifyOperatorPin(pin: String): Boolean = false
 
     override suspend fun setExperienceMode(mode: com.zuratouch.prizewheel.domain.CustomerExperience) = Unit
+
+    override suspend fun getJackpotState() =
+        com.zuratouch.prizewheel.domain.JackpotConfig.DEFAULT
+
+    override suspend fun applyJackpotAfterSuccessfulPlay(tierPriceCents: Long, wonCategoryId: String) = Unit
+
+    override suspend fun registerDigitalPurchase(
+        productName: String,
+        categoryLabel: String,
+        priceCents: Long,
+        customerEmail: String,
+    ) = com.zuratouch.prizewheel.domain.DigitalPurchaseRecord(
+        id = 1L,
+        timestampMs = 0L,
+        productName = productName,
+        categoryLabel = categoryLabel,
+        priceCents = priceCents,
+        customerEmail = customerEmail,
+        status = com.zuratouch.prizewheel.domain.DigitalPurchaseStatus.PENDING_FULFILLMENT,
+    )
 }
 
 private class RecordingPaymentTerminal(
@@ -226,8 +277,10 @@ private class RecordingPaymentTerminal(
     private val holdIndefinitely: Boolean = false,
 ) : PaymentTerminal {
     private val hold = CompletableDeferred<Unit>()
+    var requestCount = 0
 
     override suspend fun requestPayment(amountCents: Long, lane: Int): PaymentResult {
+        requestCount++
         if (holdIndefinitely) hold.await()
         return result
     }
@@ -240,5 +293,10 @@ private class RecordingPaymentTerminal(
 private class RecordingVendingMachine(
     private val result: DispenseResult,
 ) : VendingMachine {
-    override suspend fun dispense(spiral: Spiral): DispenseResult = result
+    var dispenseCount = 0
+
+    override suspend fun dispense(spiral: Spiral): DispenseResult {
+        dispenseCount++
+        return result
+    }
 }

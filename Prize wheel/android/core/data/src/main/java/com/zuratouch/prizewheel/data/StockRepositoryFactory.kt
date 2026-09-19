@@ -12,6 +12,7 @@ object StockRepositoryFactory {
             spiralDao = database.spiralDao(),
             appConfigDao = database.appConfigDao(),
             saleLogDao = database.saleLogDao(),
+            digitalPurchaseDao = database.digitalPurchaseDao(),
         )
         repository.ensurePhysicalSpirals()
         return repository

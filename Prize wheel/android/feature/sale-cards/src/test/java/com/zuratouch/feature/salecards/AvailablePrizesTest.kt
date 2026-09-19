@@ -20,6 +20,25 @@ class AvailablePrizesTest {
         Spiral("A1", 1, 1, 1, 10, queue)
 
     @Test
+    fun `fromStock resolves catalog tier over stock queue category`() {
+        val stock = listOf(
+            spiral(listOf(QueuedProduct("mythic", "iPhone"))),
+            spiral(listOf(QueuedProduct("rare", "MacBook"))),
+        )
+        val prizes = AvailablePrizes.fromStock(categories + listOf(
+            PrizeCategory("legendary", "Lendário", 0xFFD69E2E, weight = 3),
+            PrizeCategory("mythic", "Mítico", 0xFFE53E3E, weight = 7),
+        ), stock, Random(1))
+
+        val iphone = prizes.first { it.productName == "iPhone" }
+        assertEquals("legendary", iphone.categoryId)
+        assertEquals("Lendário", iphone.categoryLabel)
+
+        val macbook = prizes.first { it.productName == "MacBook" }
+        assertEquals("mythic", macbook.categoryId)
+    }
+
+    @Test
     fun `fromStock returns unique products in machine queues`() {
         val stock = listOf(
             spiral(listOf(QueuedProduct("common", "Pato de Borracha"), QueuedProduct("common", "Pato de Borracha"))),
@@ -45,11 +64,11 @@ class AvailablePrizesTest {
     }
 
     @Test
-    fun `fromStock caps at 24 products`() {
+    fun `fromStock caps at 28 products`() {
         val stock = List(30) { index ->
             Spiral("S$index", 1, 1, 1, 10, listOf(QueuedProduct("common", "Produto $index")))
         }
         val prizes = AvailablePrizes.fromStock(categories, stock, Random(1))
-        assertEquals(24, prizes.size)
+        assertEquals(28, prizes.size)
     }
 }

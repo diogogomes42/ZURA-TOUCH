@@ -31,6 +31,8 @@ data class AppConfigEntity(
     val operatorPin: String = "",
     val soundEnabled: Boolean = true,
     val experienceMode: String = "WHEEL",
+    val jackpotAccumulatedRevenueCents: Long = 0L,
+    val jackpotEnabled: Boolean = true,
 )
 
 @Entity(tableName = "sale_logs")
@@ -42,4 +44,15 @@ data class SaleLogEntity(
     val vmcLane: Int,
     val result: String,
     val message: String?,
+)
+
+@Entity(tableName = "digital_purchases")
+data class DigitalPurchaseEntity(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val timestampMs: Long,
+    val productName: String,
+    val categoryLabel: String,
+    val priceCents: Long,
+    val customerEmail: String,
+    val status: String,
 )

@@ -16,13 +16,10 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -42,6 +39,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import com.zuratouch.feature.salecards.CardProductImages
 import com.zuratouch.prizewheel.domain.CardSlot
+import com.zuratouch.prizewheel.domain.PrizeCategory
+import com.zuratouch.prizewheel.domain.PrizeProductCatalog
 import kotlinx.coroutines.delay
 import kotlin.math.roundToInt
 
@@ -62,6 +61,7 @@ private const val WINNER_HOLD_MS = 5_000L
 @Composable
 fun AnimatedCardBoard(
     slots: List<CardSlot>,
+    categories: List<PrizeCategory>,
     selectedIndex: Int?,
     onSelect: (Int) -> Unit,
     selectionEnabled: Boolean,
@@ -208,12 +208,34 @@ fun AnimatedCardBoard(
                     .fillMaxWidth()
                     .weight(1f),
             ) {
-                val columns = CardGridSpec.COLUMNS
+                val columns = CardGridSpec.BOARD_COLUMNS
                 val density = LocalDensity.current
                 val cardAreaWidthPx = constraints.maxWidth.toFloat().coerceAtLeast(1f)
                 val cardAreaHeightPx = constraints.maxHeight.toFloat().coerceAtLeast(1f)
-                val rowCount = (slots.size + columns - 1) / columns
-                val metrics = computeCardGridMetrics(cardAreaWidthPx, rowCount, density)
+                val topPaddingPx = with(density) { 6.dp.roundToPx().toFloat() }
+                val winnerGapPx = with(density) { 8.dp.roundToPx().toFloat() }
+                val winnerMaxScale = 1.06f
+                val reserveWinnerBand = showBanner || inFocus || phase >= DealPhase.RevealSelected
+                val preliminary = computeBoardGridMetrics(
+                    areaWidthPx = cardAreaWidthPx,
+                    areaHeightPx = cardAreaHeightPx,
+                    slotCount = slots.size,
+                    density = density,
+                    columns = columns,
+                )
+                val winnerBandPx = if (reserveWinnerBand) {
+                    topPaddingPx + preliminary.cardHeightPx * winnerMaxScale + winnerGapPx
+                } else {
+                    0f
+                }
+                val metrics = computeBoardGridMetrics(
+                    areaWidthPx = cardAreaWidthPx,
+                    areaHeightPx = cardAreaHeightPx,
+                    slotCount = slots.size,
+                    density = density,
+                    columns = columns,
+                    reservedTopPx = winnerBandPx,
+                )
                 val spacingPx = metrics.spacingPx
                 val cardWidthPx = metrics.cardWidthPx
                 val cardHeightPx = metrics.cardHeightPx
@@ -232,36 +254,19 @@ fun AnimatedCardBoard(
                     modifier = Modifier.fillMaxSize(),
                 )
 
-                val topPaddingPx = with(density) { 8.dp.roundToPx().toFloat() }
-                val winnerGapPx = with(density) { 20.dp.roundToPx().toFloat() }
-                val winnerMaxScale = 1.14f
-                val winnerSlotPx = topPaddingPx + cardHeightPx * winnerMaxScale + winnerGapPx
-                val topInsetPx = winnerSlotPx * focusProgress
                 val gridHeightPx = metrics.gridHeightPx
-                val totalHeightPx = gridHeightPx + topInsetPx + topPaddingPx
-                val needsScroll = totalHeightPx > cardAreaHeightPx
-                val startY = if (needsScroll) 0f else ((cardAreaHeightPx - totalHeightPx) / 2f).coerceAtLeast(0f)
+                val gridStartY = if (reserveWinnerBand) {
+                    winnerBandPx + ((cardAreaHeightPx - winnerBandPx - gridHeightPx) / 2f)
+                        .coerceAtLeast(0f)
+                } else {
+                    ((cardAreaHeightPx - gridHeightPx) / 2f).coerceAtLeast(topPaddingPx)
+                }
                 val centerX = cardAreaWidthPx / 2f - cardWidthPx / 2f
                 val centerY = cardAreaHeightPx / 2f - cardHeightPx / 2f
-                val winnerTargetY = startY + topPaddingPx
-                val scrollState = rememberScrollState()
+                val winnerTargetY = topPaddingPx
 
-                LaunchedEffect(inFocus, needsScroll) {
-                    if (inFocus && needsScroll) {
-                        scrollState.scrollTo(0)
-                    }
-                }
-
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .then(if (needsScroll) Modifier.verticalScroll(scrollState) else Modifier),
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .heightIn(min = with(density) { totalHeightPx.toDp() }),
-                    ) {
+                Box(modifier = Modifier.fillMaxSize()) {
+                    Box(modifier = Modifier.fillMaxWidth()) {
                 val sortedSlots = remember(slots, selectedIndex, focusProgress) {
                     slots.sortedBy { slot ->
                         if (focusProgress > 0f && slot.index == selectedIndex) 1f else 0f
@@ -272,7 +277,7 @@ fun AnimatedCardBoard(
                     val col = slot.index % columns
                     val row = slot.index / columns
                     val gridX = col * (cardWidthPx + spacingPx).toFloat()
-                    val gridY = startY + topInsetPx + row * (cardHeightPx + spacingPx)
+                    val gridY = gridStartY + row * (cardHeightPx + spacingPx)
                     val stackOffsetX = (slot.index % 5) * 1.2f
                     val stackOffsetY = -(slot.index % 8) * 1.8f
 
@@ -309,6 +314,7 @@ fun AnimatedCardBoard(
 
                     ProductCardTile(
                         slot = slot,
+                        categories = categories,
                         selectedIndex = selectedIndex,
                         winningSlot = winningSlot,
                         rotationY = rotationY,
@@ -362,7 +368,7 @@ private fun focusCardLayout(
 
     if (isSelected) {
         val popScale = 1f + celebratePop * 0.05f + winnerPulse * 0.02f
-        val focusScale = if (focusProgress > 0f) lerp(1f, 1.06f, focusProgress) else 1f + celebratePop * 0.03f
+        val focusScale = if (focusProgress > 0f) lerp(1f, 1.04f, focusProgress) else 1f + celebratePop * 0.02f
         return FocusLayout(
             x = if (focusProgress > 0f) lerp(spreadX, centerX, focusProgress) else spreadX,
             y = if (focusProgress > 0f) lerp(spreadY, winnerTargetY, focusProgress) else spreadY,
@@ -382,6 +388,7 @@ private fun focusCardLayout(
 @Composable
 private fun ProductCardTile(
     slot: CardSlot,
+    categories: List<PrizeCategory>,
     selectedIndex: Int?,
     winningSlot: CardSlot?,
     rotationY: Float,
@@ -402,11 +409,11 @@ private fun ProductCardTile(
     } else {
         slot.displayProduct
     }
-    val faceCategory = if (winningProduct != null && winningCategory != null) {
-        slot.faceCategory(selectedIndex, winningCategory)
-    } else {
-        slot.category
-    }
+    val borderCategory = PrizeProductCatalog.resolveCategory(
+        productName = faceProduct.productName,
+        stockCategoryId = faceProduct.categoryId,
+        categories = categories,
+    )
 
     Box(
         modifier = modifier.graphicsLayer {
@@ -447,7 +454,7 @@ private fun ProductCardTile(
                 CardProductFace(
                     productName = faceProduct.productName,
                     imageRes = CardProductImages.drawableFor(faceProduct.productName),
-                    categoryColor = faceCategory.color,
+                    categoryColor = borderCategory.color,
                     variant = faceVariant,
                     modifier = Modifier.fillMaxSize(),
                     cornerRadius = 12.dp,

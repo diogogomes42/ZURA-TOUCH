@@ -2,6 +2,10 @@
 <resources>
     <string name="brand_title">ZURA TOUCH</string>
     <string name="cards_play_cta">JOGAR CARTAS</string>
+    <string name="cards_trial_cta">EXPERIMENTAR GRÁTIS</string>
+    <string name="cards_choice_dialog_title">Quer jogar?</string>
+    <string name="cards_choice_dialog_subtitle">Toque numa opção para continuar</string>
+    <string name="cards_choice_dialog_timer">Fecha em %1$d s</string>
     <string name="cards_pick_hint">Escolha uma carta</string>
     <string name="cards_dealing">A baralhar as cartas…</string>
     <string name="cards_revealing">O seu prémio!</string>
@@ -13,6 +17,23 @@
     <string name="cards_badge_jackpot">PRÉMIO MÁXIMO</string>
     <string name="cards_badge_jackpot_pick">ACERTOU O MÁXIMO!</string>
     <string name="cards_idle_hint">Prémios disponíveis na máquina. Paga para baralhar e escolher.</string>
+    <string name="cards_idle_cta_title">TOQUE NUMA CARTA PARA JOGAR</string>
+    <string name="cards_idle_cta_subtitle">Experimente grátis ou jogue para ganhar prémios reais</string>
+    <string name="tier_change_label">ALTERAR</string>
+    <string name="jackpot_bar_title">JACKPOT AUTOMÁTICO</string>
+    <string name="jackpot_bar_subtitle">A barra enche à medida que a máquina é jogada</string>
+    <string name="jackpot_bar_ready_title">JACKPOT AUTOMÁTICO ATIVO</string>
+    <string name="jackpot_bar_ready_subtitle">Prémio Lendário garantido na próxima jogada</string>
+    <string name="tier_selection_title">Escolhe o teu nível</string>
+    <string name="tier_selection_subtitle">Maior nível = maior concentração de prémios raros</string>
+    <string name="tier_selection_prizes_label">Prémios: %1$s</string>
+    <string name="tier_selection_progression">LITE → PLUS → PRO → ULTRA → PRIME</string>
+    <string name="tier_selection_continue">CONTINUAR</string>
+    <string name="tier_info_title">Níveis de jogo</string>
+    <string name="tier_info_subtitle">Cada nível muda o valor e os tipos de prémios possíveis</string>
+    <string name="tier_info_prizes_label">Prémios possíveis: %1$s</string>
+    <string name="tier_info_close">Fechar</string>
+    <string name="tier_info_content_description">Informação sobre os níveis de jogo</string>
     <string name="cards_unavailable">Modo cartas indisponível — reponha stock.</string>
     <string name="payment_pending">A confirmar pagamento…</string>
     <string name="dispensing">A preparar o seu prémio…</string>

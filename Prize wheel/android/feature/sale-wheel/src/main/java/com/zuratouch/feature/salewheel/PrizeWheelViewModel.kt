@@ -6,7 +6,10 @@ import com.zuratouch.prizewheel.data.StockDataSource
 import com.zuratouch.prizewheel.data.StockRepository
 import com.zuratouch.prizewheel.domain.DispensePlan
 import com.zuratouch.prizewheel.domain.DispenseResult
+import com.zuratouch.prizewheel.domain.JackpotDisplayState
+import com.zuratouch.prizewheel.domain.JackpotProgress
 import com.zuratouch.prizewheel.domain.PrizeEngine
+import com.zuratouch.prizewheel.domain.PrizeTierCatalog
 import com.zuratouch.prizewheel.domain.SaleLogResult
 import com.zuratouch.prizewheel.domain.SaleSession
 import com.zuratouch.prizewheel.domain.SaleState
@@ -28,7 +31,8 @@ import kotlinx.coroutines.runBlocking
 data class PrizeWheelUiState(
     val saleState: SaleState = SaleState.IDLE,
     val categories: List<com.zuratouch.prizewheel.domain.PrizeCategory> = emptyList(),
-    val spinPriceCents: Long = 200,
+    val selectedTierId: String = PrizeTierCatalog.LITE,
+    val spinPriceCents: Long = PrizeTierCatalog.tierByIdOrThrow(PrizeTierCatalog.LITE).priceCents,
     val mysteryBoxLabel: String = "Mystery Box",
     val winningCategory: com.zuratouch.prizewheel.domain.PrizeCategory? = null,
     val spinFromRotation: Float = 0f,
@@ -38,6 +42,7 @@ data class PrizeWheelUiState(
     val message: String? = null,
     val isSpinning: Boolean = false,
     val spinSessionId: Long = 0L,
+    val jackpotDisplay: JackpotDisplayState = JackpotDisplayState(),
 )
 
 class PrizeWheelViewModel(
@@ -71,17 +76,21 @@ class PrizeWheelViewModel(
                 mysteryBoxLabel = snapshot.config.mysteryBoxLabel
                 feedbackManager.setSoundEnabled(snapshot.config.soundEnabled)
                 val available = engine.availableCategories(categories, stock)
+                val tierPrice = currentTierPrice(_uiState.value.selectedTierId)
+                val jackpotDisplay = JackpotProgress.displayStateFor(snapshot.config.jackpot)
                 _uiState.update { current ->
                     if (current.saleState == SaleState.IDLE) {
                         current.copy(
                             categories = available,
-                            spinPriceCents = spinPriceCents,
+                            spinPriceCents = tierPrice,
                             mysteryBoxLabel = mysteryBoxLabel,
+                            jackpotDisplay = jackpotDisplay,
                         )
                     } else {
                         current.copy(
-                            spinPriceCents = spinPriceCents,
+                            spinPriceCents = tierPrice,
                             mysteryBoxLabel = mysteryBoxLabel,
+                            jackpotDisplay = jackpotDisplay,
                         )
                     }
                 }
@@ -89,26 +98,43 @@ class PrizeWheelViewModel(
         }
     }
 
-    fun purchaseSpin() {
+    fun selectTier(tierId: String) {
         if (_uiState.value.saleState != SaleState.IDLE || isProcessing) return
+        val tier = PrizeTierCatalog.tierById(tierId) ?: return
+        feedbackManager.buttonTap()
+        _uiState.update {
+            it.copy(
+                selectedTierId = tierId,
+                spinPriceCents = tier.priceCents,
+            )
+        }
+    }
+
+    fun purchaseSpin() {
+        val ui = _uiState.value
+        if (ui.saleState != SaleState.IDLE || isProcessing) return
+        val tier = PrizeTierCatalog.tierByIdOrThrow(ui.selectedTierId)
         isProcessing = true
         paymentCompletedForActiveSale = false
         feedbackManager.buttonTap()
         purchaseJob?.cancel()
         purchaseJob = viewModelScope.launch {
             try {
-                val sale = engine.createSale(categories, stock)
+                val jackpot = stockRepository.getJackpotState()
+                val sale = engine.createTierSale(tier, categories, stock, jackpot)
                 if (sale == null) {
                     isProcessing = false
                     showError("Não há prémios disponíveis.")
                     return@launch
                 }
                 activeSale = sale
+                val playPriceCents = sale.tierPriceCents ?: tier.priceCents
                 val paymentLane = engine.pickSpiralForCategory(stock, sale.category.id)?.vmcLane ?: 1
                 _uiState.update {
                     it.copy(
                         saleState = SaleState.PAYMENT_PENDING,
                         categories = sale.wheelCategories,
+                        spinPriceCents = playPriceCents,
                         message = "A confirmar pagamento…",
                         winningCategory = null,
                         revealedPrize = null,
@@ -118,7 +144,7 @@ class PrizeWheelViewModel(
 
                 when (
                     val payment = paymentTerminal.requestPayment(
-                        amountCents = spinPriceCents,
+                        amountCents = playPriceCents,
                         lane = paymentLane,
                     )
                 ) {
@@ -203,6 +229,9 @@ class PrizeWheelViewModel(
         val plan = dispenseWithFallback(sale)
         if (plan != null) {
             val stockUpdated = stockRepository.registerDelivery(plan.spiral.id)
+            sale.tierPriceCents?.let { tierPrice ->
+                stockRepository.applyJackpotAfterSuccessfulPlay(tierPrice, sale.category.id)
+            }
             stockRepository.logSale(
                 categoryLabel = sale.category.label,
                 productName = plan.product.productName,
@@ -222,8 +251,9 @@ class PrizeWheelViewModel(
             paymentCompletedForActiveSale = false
             scheduleRevealAutoReturn()
         } else {
+            val refundAmount = sale.tierPriceCents ?: spinPriceCents
             val refundLane = engine.pickSpiralForCategory(stock, sale.category.id)?.vmcLane ?: 1
-            val refunded = paymentTerminal.refundPayment(spinPriceCents, refundLane)
+            val refunded = paymentTerminal.refundPayment(refundAmount, refundLane)
             stockRepository.logSale(
                 categoryLabel = sale.category.label,
                 productName = null,
@@ -281,10 +311,16 @@ class PrizeWheelViewModel(
             saleState = SaleState.IDLE,
             categories = available,
             spinPriceCents = spinPriceCents,
+            selectedTierId = PrizeTierCatalog.LITE,
             mysteryBoxLabel = mysteryBoxLabel,
             currentRotation = _uiState.value.currentRotation,
+            jackpotDisplay = _uiState.value.jackpotDisplay,
         )
     }
+
+    private fun currentTierPrice(selectedTierId: String): Long =
+        PrizeTierCatalog.tierById(selectedTierId)?.priceCents
+            ?: PrizeTierCatalog.tierByIdOrThrow(PrizeTierCatalog.LITE).priceCents
 
     private fun showError(message: String) {
         feedbackManager.error()
@@ -333,7 +369,8 @@ class PrizeWheelViewModel(
         when (state) {
             SaleState.PAYMENT_PENDING -> paymentTerminal.cancel()
             SaleState.SPINNING, SaleState.DISPENSING -> if (paid) {
-                val refunded = paymentTerminal.refundPayment(spinPriceCents, refundLane)
+                val refundAmount = sale.tierPriceCents ?: spinPriceCents
+                val refunded = paymentTerminal.refundPayment(refundAmount, refundLane)
                 stockRepository.logSale(
                     categoryLabel = sale.category.label,
                     productName = null,

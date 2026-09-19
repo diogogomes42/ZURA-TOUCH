@@ -90,6 +90,12 @@ interface AppConfigDao {
 
     @Query("UPDATE app_config SET experienceMode = :mode WHERE id = 1")
     suspend fun updateExperienceMode(mode: String)
+
+    @Query("UPDATE app_config SET jackpotAccumulatedRevenueCents = :accumulatedCents WHERE id = 1")
+    suspend fun updateJackpotAccumulated(accumulatedCents: Long)
+
+    @Query("UPDATE app_config SET jackpotEnabled = :enabled WHERE id = 1")
+    suspend fun updateJackpotEnabled(enabled: Boolean)
 }
 
 @Dao
@@ -99,4 +105,13 @@ interface SaleLogDao {
 
     @Insert
     suspend fun insert(log: SaleLogEntity)
+}
+
+@Dao
+interface DigitalPurchaseDao {
+    @Insert
+    suspend fun insert(purchase: DigitalPurchaseEntity): Long
+
+    @Query("SELECT * FROM digital_purchases ORDER BY timestampMs DESC LIMIT :limit")
+    suspend fun getRecent(limit: Int): List<DigitalPurchaseEntity>
 }

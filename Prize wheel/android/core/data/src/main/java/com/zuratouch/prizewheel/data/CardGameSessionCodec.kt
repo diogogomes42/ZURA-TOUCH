@@ -16,6 +16,7 @@ object CardGameSessionCodec {
     fun encode(session: CardGameSession): String {
         val root = JSONObject()
             .put("paymentConfirmed", session.paymentConfirmed)
+            .put("isTrialRound", session.isTrialRound)
             .put("boardSeed", session.board.boardSeed)
             .put("generatedAtMs", session.board.generatedAtMs)
             .put("slots", JSONArray(session.board.slots.map { encodeSlot(it) }))
@@ -40,6 +41,7 @@ object CardGameSessionCodec {
             board = board,
             paymentConfirmed = root.getBoolean("paymentConfirmed"),
             selectedSlot = selectedSlot,
+            isTrialRound = root.optBoolean("isTrialRound", false),
         )
     }.getOrNull()
 

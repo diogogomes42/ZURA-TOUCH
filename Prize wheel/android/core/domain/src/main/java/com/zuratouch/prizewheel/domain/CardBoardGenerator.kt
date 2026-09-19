@@ -16,6 +16,24 @@ class CardBoardGenerator(
         return deliverablePlans(stock).isNotEmpty()
     }
 
+    fun canGenerateForTier(
+        tier: PrizeTierDefinition,
+        categories: List<PrizeCategory>,
+        stock: List<Spiral>,
+        jackpot: JackpotState,
+    ): Boolean {
+        if (!canGenerateBoard(categories, stock)) return false
+        return TierPrizeSelector(prizeEngine).canPlayTier(tier, categories, stock, jackpot)
+    }
+
+    fun playableTiers(
+        categories: List<PrizeCategory>,
+        stock: List<Spiral>,
+        jackpot: JackpotState,
+    ): List<PrizeTierDefinition> = PrizeTierCatalog.tiers.filter { tier ->
+        canGenerateForTier(tier, categories, stock, jackpot)
+    }
+
     fun generate(
         categories: List<PrizeCategory>,
         stock: List<Spiral>,
@@ -24,9 +42,49 @@ class CardBoardGenerator(
         random: Random = this.random,
     ): CardBoard? {
         if (!canGenerateBoard(categories, stock)) return null
-
         val dispensable = prizeEngine.dispensableCategories(categories, stock)
         val targetCategory = prizeEngine.pickWeightedCategory(dispensable) ?: return null
+        return buildBoard(
+            categories = categories,
+            stock = stock,
+            targetCategory = targetCategory,
+            rules = rules,
+            generatedAtMs = generatedAtMs,
+            random = random,
+        )
+    }
+
+    fun generateForTier(
+        tier: PrizeTierDefinition,
+        categories: List<PrizeCategory>,
+        stock: List<Spiral>,
+        jackpot: JackpotState,
+        rules: CardBoardRules = CardBoardRules(),
+        generatedAtMs: Long = System.currentTimeMillis(),
+        random: Random = this.random,
+    ): CardBoard? {
+        if (!canGenerateBoard(categories, stock)) return null
+        val selector = TierPrizeSelector(prizeEngine, random)
+        val categoryId = selector.selectCategory(tier, categories, stock, jackpot) ?: return null
+        val targetCategory = categories.find { it.id == categoryId } ?: return null
+        return buildBoard(
+            categories = categories,
+            stock = stock,
+            targetCategory = targetCategory,
+            rules = rules,
+            generatedAtMs = generatedAtMs,
+            random = random,
+        )
+    }
+
+    private fun buildBoard(
+        categories: List<PrizeCategory>,
+        stock: List<Spiral>,
+        targetCategory: PrizeCategory,
+        rules: CardBoardRules,
+        generatedAtMs: Long,
+        random: Random,
+    ): CardBoard? {
         val targetPlan = prizeEngine.planDispense(stock, targetCategory.id) ?: return null
 
         val pool = deliverablePlans(stock)
@@ -49,11 +107,21 @@ class CardBoardGenerator(
         }
 
         repeat(rules.targetSlotCount) {
+            val winCategory = PrizeProductCatalog.resolveCategory(
+                productName = targetPlan.product.productName,
+                stockCategoryId = targetPlan.product.categoryId,
+                categories = categories,
+            ).let { resolved ->
+                resolved.copy(
+                    weight = categoryById[resolved.id]?.weight ?: targetCategory.weight,
+                    icon = categoryById[resolved.id]?.icon ?: targetCategory.icon,
+                )
+            }
             unshuffled += CardSlot(
                 index = -1,
                 dispensePlan = targetPlan,
                 displayProduct = targetPlan.product,
-                category = targetCategory,
+                category = winCategory,
                 isTargetSlot = true,
             )
         }
@@ -87,29 +155,14 @@ class CardBoardGenerator(
         product: QueuedProduct,
         categoryById: Map<String, PrizeCategory>,
         fallback: PrizeCategory,
-    ): PrizeCategory = categoryById[product.categoryId] ?: PrizeCategory(
-        id = product.categoryId,
-        label = catalogLabelFor(product.categoryId),
-        color = catalogColorFor(product.categoryId),
-        weight = fallback.weight,
-        icon = fallback.icon,
-    )
-
-    private fun catalogLabelFor(categoryId: String): String = when (categoryId) {
-        PrizeProductCatalog.COMMON -> "Comum"
-        PrizeProductCatalog.RARE -> "Raro"
-        PrizeProductCatalog.EPIC -> "Épico"
-        PrizeProductCatalog.LEGENDARY -> "Lendário"
-        PrizeProductCatalog.MYTHIC -> "Mítico"
-        else -> categoryId
-    }
-
-    private fun catalogColorFor(categoryId: String): Long = when (categoryId) {
-        PrizeProductCatalog.COMMON -> 0xFF718096
-        PrizeProductCatalog.RARE -> 0xFF3182CE
-        PrizeProductCatalog.EPIC -> 0xFF805AD5
-        PrizeProductCatalog.LEGENDARY -> 0xFFD69E2E
-        PrizeProductCatalog.MYTHIC -> 0xFFE53E3E
-        else -> 0xFF718096
+    ): PrizeCategory = PrizeProductCatalog.resolveCategory(
+        productName = product.productName,
+        stockCategoryId = product.categoryId,
+        categories = categoryById.values.toList(),
+    ).let { resolved ->
+        resolved.copy(
+            weight = categoryById[resolved.id]?.weight ?: fallback.weight,
+            icon = categoryById[resolved.id]?.icon ?: fallback.icon,
+        )
     }
 }

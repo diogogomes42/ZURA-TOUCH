@@ -1,25 +1,30 @@
 package com.zuratouch.feature.salecards.components
 
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -27,65 +32,102 @@ import com.zuratouch.feature.salecards.AvailablePrizeDisplay
 import com.zuratouch.feature.salecards.AvailablePrizes
 import com.zuratouch.feature.salecards.theme.ZuraColors
 
-/** Até 24 prémios (4×6) — mesmo tamanho de carta que o tabuleiro de jogo. */
+/** Até 28 prémios espalhados aleatoriamente — com movimento idle suave. */
 @Composable
 fun PrizeShowcaseGrid(
     prizes: List<AvailablePrizeDisplay>,
     modifier: Modifier = Modifier,
+    onPrizeClick: ((AvailablePrizeDisplay) -> Unit)? = null,
+    prizesClickable: Boolean = false,
+    idleAnimationEnabled: Boolean = true,
+    animationPaused: Boolean = false,
 ) {
     val visible = prizes.take(AvailablePrizes.MAX_SHOWCASE)
-    val rowCount = ((visible.size + CardGridSpec.COLUMNS - 1) / CardGridSpec.COLUMNS)
-        .coerceIn(1, CardGridSpec.ROWS)
+    val layoutSeed = remember(visible) {
+        visible.fold(17L) { acc, prize -> acc * 31L + prize.productName.hashCode() }
+    }
 
-    BoxWithConstraints(
-        modifier = modifier.fillMaxSize(),
-        contentAlignment = Alignment.TopCenter,
-    ) {
+    val motionIntensity by animateFloatAsState(
+        targetValue = if (idleAnimationEnabled && !animationPaused) 1f else 0f,
+        animationSpec = tween(durationMillis = 700, easing = FastOutSlowInEasing),
+        label = "showcaseMotionIntensity",
+    )
+
+    val infiniteTransition = rememberInfiniteTransition(label = "showcaseIdle")
+    val idlePhase by infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = ShowcaseIdleMotion.TWO_PI,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = ShowcaseIdleMotion.CYCLE_MS, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart,
+        ),
+        label = "showcaseIdlePhase",
+    )
+
+    BoxWithConstraints(modifier = modifier.fillMaxSize()) {
         val density = LocalDensity.current
-        val metrics = computeCardGridMetrics(
-            areaWidthPx = constraints.maxWidth.toFloat().coerceAtLeast(1f),
-            rowCount = rowCount,
-            density = density,
-        )
-        val cardW = with(density) { metrics.cardWidthPx.toDp() }
-        val cardH = with(density) { metrics.cardHeightPx.toDp() }
-        val gridW = with(density) { metrics.gridWidthPx.toDp() }
-        val gridH = with(density) { metrics.gridHeightPx.toDp() }
-        val needsScroll = metrics.gridHeightPx > constraints.maxHeight
-        val scrollState = rememberScrollState()
+        val areaWidthPx = constraints.maxWidth.toFloat().coerceAtLeast(1f)
+        val areaHeightPx = constraints.maxHeight.toFloat().coerceAtLeast(1f)
+        val gapPx = with(density) { CardGridSpec.SHOWCASE_SPACING.roundToPx().toFloat() }
+        val driftXPx = with(density) { 5.dp.toPx() }
+        val driftYPx = with(density) { 3.5.dp.toPx() }
+        val cameraDistancePx = with(density) { 14.dp.toPx() }
 
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .then(if (needsScroll) Modifier.verticalScroll(scrollState) else Modifier),
-            contentAlignment = Alignment.TopCenter,
-        ) {
-            Column(
-                modifier = Modifier
-                    .width(gridW)
-                    .height(gridH),
-                verticalArrangement = Arrangement.spacedBy(CardGridSpec.SPACING),
-            ) {
-                visible.chunked(CardGridSpec.COLUMNS).forEach { rowPrizes ->
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(
-                            space = CardGridSpec.SPACING,
-                            alignment = Alignment.CenterHorizontally,
-                        ),
-                    ) {
-                        rowPrizes.forEach { prize ->
-                            CardProductFace(
-                                productName = prize.productName,
-                                imageRes = prize.imageRes,
-                                categoryColor = prize.categoryColor,
-                                modifier = Modifier.size(width = cardW, height = cardH),
-                                cornerRadius = 12.dp,
-                            )
-                        }
-                    }
+        val placements = remember(areaWidthPx, areaHeightPx, visible, layoutSeed) {
+            ScatteredCardLayout.compute(
+                count = visible.size,
+                areaWidthPx = areaWidthPx,
+                areaHeightPx = areaHeightPx,
+                gapPx = gapPx,
+                seed = layoutSeed,
+            )
+        }
+
+        visible.forEachIndexed { index, prize ->
+            val placement = placements.getOrNull(index) ?: return@forEachIndexed
+            val cardW = with(density) { placement.width.toDp() }
+            val cardH = with(density) { placement.height.toDp() }
+            val offsetX = with(density) { placement.x.toDp() }
+            val offsetY = with(density) { placement.y.toDp() }
+            val cornerRadius = (placement.width / density.density * 0.11f).coerceIn(5f, 11f).dp
+            val imagePadding = (placement.width / density.density * 0.07f).coerceIn(3f, 7f).dp
+            val motion = ShowcaseIdleMotion.layerForCard(
+                index = index,
+                phase = idlePhase,
+                intensity = motionIntensity,
+                baseRotationZ = placement.rotationDegrees,
+                driftXPx = driftXPx,
+                driftYPx = driftYPx,
+            )
+
+            val cardModifier = Modifier
+                .offset(x = offsetX, y = offsetY)
+                .size(cardW, cardH)
+                .graphicsLayer {
+                    translationX = motion.translationXPx
+                    translationY = motion.translationYPx
+                    rotationZ = motion.rotationZ
+                    rotationY = motion.rotationY
+                    cameraDistance = cameraDistancePx
                 }
-            }
+
+            CardProductFace(
+                productName = prize.productName,
+                imageRes = prize.imageRes,
+                categoryColor = prize.categoryColor,
+                modifier = if (onPrizeClick != null) {
+                    cardModifier.clickable(
+                        enabled = prizesClickable,
+                        interactionSource = remember(prize.productName) { MutableInteractionSource() },
+                        indication = null,
+                        onClick = { onPrizeClick(prize) },
+                    )
+                } else {
+                    cardModifier
+                },
+                cornerRadius = cornerRadius,
+                imagePadding = imagePadding,
+            )
         }
     }
 }
@@ -102,7 +144,7 @@ fun CardBackFace(modifier: Modifier = Modifier) {
                 ),
             )
             .border(1.5.dp, ZuraColors.Accent.copy(alpha = 0.4f), RoundedCornerShape(12.dp)),
-        contentAlignment = Alignment.Center,
+        contentAlignment = androidx.compose.ui.Alignment.Center,
     ) {
         Text(
             text = "?",

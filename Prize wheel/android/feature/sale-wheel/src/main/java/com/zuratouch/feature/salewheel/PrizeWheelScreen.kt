@@ -14,7 +14,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -30,14 +29,16 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -49,18 +50,30 @@ import com.zuratouch.feature.salewheel.R
 import com.zuratouch.prizewheel.domain.SaleState
 import com.zuratouch.prizewheel.hardware.HardwareStatus
 import com.zuratouch.feature.salewheel.components.HardwareDegradedBanner
+import com.zuratouch.feature.salewheel.components.IdleCallToActionBanner
+import com.zuratouch.feature.salewheel.components.LegendaryJackpotBar
+import com.zuratouch.feature.salewheel.components.PlayCtaWithTierPicker
 import com.zuratouch.feature.salewheel.components.PrizeRevealOverlay
+import com.zuratouch.feature.salewheel.components.PrizeTierPickerDialog
 import com.zuratouch.feature.salewheel.components.PrizeWheelCanvas
 import com.zuratouch.feature.salewheel.theme.ZuraColors
-import java.util.Locale
 
 @Composable
 fun PrizeWheelScreen(
     viewModel: PrizeWheelViewModel,
     hardwareStatus: HardwareStatus = HardwareStatus.Simulated,
     modifier: Modifier = Modifier,
+    topBar: (@Composable () -> Unit)? = null,
+    inactivityResetSignal: Int = 0,
 ) {
     val state by viewModel.uiState.collectAsState()
+    var showTierPicker by remember { mutableStateOf(false) }
+    LaunchedEffect(inactivityResetSignal) {
+        if (inactivityResetSignal > 0) {
+            showTierPicker = false
+            viewModel.returnToIdle()
+        }
+    }
     Box(
         modifier = modifier
             .fillMaxSize()
@@ -85,8 +98,19 @@ fun PrizeWheelScreen(
                     modifier = Modifier.padding(bottom = 12.dp),
                 )
             }
-            BrandHeader(mysteryBoxLabel = state.mysteryBoxLabel)
-            Spacer(modifier = Modifier.height(24.dp))
+            if (topBar != null) {
+                topBar()
+            } else {
+                BrandHeader(mysteryBoxLabel = state.mysteryBoxLabel)
+            }
+            if (state.saleState == SaleState.IDLE && state.categories.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(12.dp))
+                IdleCallToActionBanner(
+                    title = stringResource(R.string.wheel_idle_cta_title),
+                    subtitle = stringResource(R.string.wheel_idle_cta_subtitle),
+                )
+            }
+            Spacer(modifier = Modifier.height(16.dp))
             Column(
                 modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.Center,
@@ -103,12 +127,22 @@ fun PrizeWheelScreen(
                 )
                 Spacer(modifier = Modifier.height(28.dp))
                 StatusSection(state = state)
-                Spacer(modifier = Modifier.height(20.dp))
+                if (state.saleState == SaleState.IDLE && state.jackpotDisplay.visible) {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    LegendaryJackpotBar(
+                        state = state.jackpotDisplay,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                }
+                Spacer(modifier = Modifier.height(12.dp))
                 when (state.saleState) {
-                    SaleState.IDLE -> SpinButton(
+                    SaleState.IDLE -> PlayCtaWithTierPicker(
+                        actionLabel = stringResource(R.string.spin_cta),
+                        selectedTierId = state.selectedTierId,
                         priceCents = state.spinPriceCents,
                         enabled = state.categories.isNotEmpty(),
-                        onClick = viewModel::purchaseSpin,
+                        onPlay = viewModel::purchaseSpin,
+                        onPriceClick = { showTierPicker = true },
                     )
                     SaleState.ERROR -> {
                         Button(
@@ -135,6 +169,14 @@ fun PrizeWheelScreen(
                 onFinish = viewModel::returnToIdle,
             )
         }
+
+        if (showTierPicker && state.saleState == SaleState.IDLE) {
+            PrizeTierPickerDialog(
+                selectedTierId = state.selectedTierId,
+                onTierSelected = viewModel::selectTier,
+                onDismiss = { showTierPicker = false },
+            )
+        }
     }
 }
 
@@ -147,8 +189,8 @@ private fun BrandHeader(mysteryBoxLabel: String) {
             painter = painterResource(R.drawable.zura_touch_logo),
             contentDescription = stringResource(R.string.brand_title),
             modifier = Modifier
-                .widthIn(max = 200.dp)
-                .heightIn(min = 100.dp, max = 140.dp),
+                .widthIn(max = 140.dp)
+                .heightIn(min = 56.dp, max = 80.dp),
             contentScale = ContentScale.Fit,
         )
         Text(
@@ -212,41 +254,3 @@ private fun statusMessage(state: PrizeWheelUiState): String = when (state.saleSt
     SaleState.ERROR -> state.message ?: stringResource(R.string.error_generic)
     SaleState.REVEALING_PRIZE -> ""
 }
-
-@Composable
-private fun SpinButton(priceCents: Long, enabled: Boolean, onClick: () -> Unit) {
-    val pulse = rememberInfiniteTransition(label = "ctaPulse")
-    val scale by pulse.animateFloat(
-        initialValue = 1f,
-        targetValue = if (enabled) 1.03f else 1f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(1100),
-            repeatMode = RepeatMode.Reverse,
-        ),
-        label = "ctaScale",
-    )
-    Button(
-        onClick = onClick,
-        enabled = enabled,
-        modifier = Modifier
-            .fillMaxWidth()
-            .graphicsLayer(scaleX = scale, scaleY = scale)
-            .shadow(8.dp, RoundedCornerShape(13.dp)),
-        colors = ButtonDefaults.buttonColors(
-            containerColor = ZuraColors.Accent,
-            contentColor = ZuraColors.BackgroundDark,
-            disabledContainerColor = ZuraColors.Accent.copy(alpha = 0.5f),
-        ),
-        shape = RoundedCornerShape(13.dp),
-    ) {
-        Text(stringResource(R.string.spin_cta), fontWeight = FontWeight.Black, letterSpacing = 0.6.sp)
-        Text(
-            text = formatPrice(priceCents),
-            modifier = Modifier.padding(start = 12.dp),
-            color = ZuraColors.BackgroundDark.copy(alpha = 0.7f),
-            fontWeight = FontWeight.Black,
-        )
-    }
-}
-
-private fun formatPrice(cents: Long): String = String.format(Locale("pt", "PT"), "€%.2f", cents / 100.0)

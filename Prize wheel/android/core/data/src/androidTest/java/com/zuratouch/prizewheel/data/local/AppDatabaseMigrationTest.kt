@@ -159,6 +159,32 @@ class AppDatabaseMigrationTest {
     }
 
     @Test
+    fun migrate9To10_addsJackpotColumnsAndBasicCategory() {
+        helper.createDatabase(testDb, 9).apply {
+            execSQL(
+                "INSERT INTO app_config (id, spinPriceCents, serialPortPath, mysteryBoxLabel, operatorPin, soundEnabled, experienceMode) " +
+                    "VALUES (1, 200, '/dev/ttyS0', 'Mystery Box', '', 1, 'WHEEL')",
+            )
+            close()
+        }
+
+        helper.runMigrationsAndValidate(testDb, 10, true, AppDatabase.MIGRATIONS[8]).apply {
+            query(
+                "SELECT jackpotAccumulatedRevenueCents, jackpotEnabled FROM app_config WHERE id = 1",
+            ).use { cursor ->
+                require(cursor.moveToFirst())
+                assertEquals(0, cursor.getInt(0))
+                assertEquals(1, cursor.getInt(1))
+            }
+            query("SELECT label FROM categories WHERE id = 'basic'").use { cursor ->
+                require(cursor.moveToFirst())
+                assertEquals("Básico", cursor.getString(0))
+            }
+            close()
+        }
+    }
+
+    @Test
     fun migrate7To8_addsExperienceModeDefaultingToWheel() {
         helper.createDatabase(testDb, 7).apply {
             execSQL(

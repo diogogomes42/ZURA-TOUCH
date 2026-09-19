@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="direct_purchase_entry">Comprar prémio</string>
+    <string name="direct_purchase_title">Comprar um prémio</string>
+    <string name="direct_purchase_subtitle">Escolhe um prémio disponível para compra direta.</string>
+    <string name="direct_purchase_section_machine">Prémios na máquina</string>
+    <string name="direct_purchase_section_digital">Experiências &amp; Gift Cards</string>
+    <string name="direct_purchase_buy">Comprar</string>
+    <string name="direct_purchase_close">Fechar</string>
+    <string name="direct_purchase_back">Voltar</string>
+    <string name="direct_purchase_confirm_title">Confirmar prémio</string>
+    <string name="direct_purchase_email_title">Email para envio</string>
+    <string name="direct_purchase_email_hint">Email</string>
+    <string name="direct_purchase_email_notice">Este prémio será enviado para o email indicado.</string>
+    <string name="direct_purchase_continue">Continuar para pagamento</string>
+    <string name="direct_purchase_payment_pending">A confirmar pagamento…</string>
+    <string name="direct_purchase_success_title">Compra concluída!</string>
+    <string name="direct_purchase_empty_machine">Sem prémios físicos disponíveis na frente da máquina.</string>
+    <string name="direct_purchase_done">Concluir</string>
+</resources>

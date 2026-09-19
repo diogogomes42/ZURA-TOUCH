@@ -20,6 +20,31 @@ class PrizeEngine(private val random: Random = Random.Default) {
         return SaleSession(category, wheelCategories)
     }
 
+    /** Tier-based draw for the wheel — probabilities come from [PrizeTierCatalog], not DB weights. */
+    fun createTierSale(
+        tier: PrizeTierDefinition,
+        categories: List<PrizeCategory>,
+        stock: List<Spiral>,
+        jackpot: JackpotState,
+    ): SaleSession? {
+        val wheelCategories = availableCategories(categories, stock)
+        if (wheelCategories.isEmpty()) return null
+        val selector = TierPrizeSelector(this, random)
+        val categoryId = selector.selectCategory(tier, categories, stock, jackpot) ?: return null
+        val category = categories.find { it.id == categoryId } ?: return null
+        val legendaryWasGuaranteed = selector.shouldGuaranteeLegendary(
+            jackpot = jackpot,
+            dispensableCategoryIds = dispensableCategories(categories, stock).map { it.id }.toSet(),
+        ) && categoryId == PrizeProductCatalog.LEGENDARY
+        return SaleSession(
+            category = category,
+            wheelCategories = wheelCategories,
+            tierId = tier.id,
+            tierPriceCents = tier.priceCents,
+            legendaryWasGuaranteed = legendaryWasGuaranteed,
+        )
+    }
+
     /** Front matches for [categoryId], sorted by queue length (desc), then shelf/slot — for dispense + fallback. */
     fun spiralsForDispense(stock: List<Spiral>, categoryId: String): List<Spiral> =
         stock.filter { it.frontMatchesCategory(categoryId) }

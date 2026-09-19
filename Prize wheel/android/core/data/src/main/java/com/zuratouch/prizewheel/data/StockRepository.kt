@@ -5,8 +5,16 @@ import com.zuratouch.prizewheel.data.local.CategoryEntity
 import com.zuratouch.prizewheel.data.local.SaleLogEntity
 import com.zuratouch.prizewheel.data.local.SpiralEntity
 import com.zuratouch.prizewheel.domain.CustomerExperience
+import com.zuratouch.prizewheel.domain.DigitalPurchaseFulfillmentGateway
+import com.zuratouch.prizewheel.domain.DigitalPurchaseRecord
+import com.zuratouch.prizewheel.domain.DigitalPurchaseStatus
+import com.zuratouch.prizewheel.domain.NoOpDigitalPurchaseFulfillmentGateway
+import com.zuratouch.prizewheel.domain.JackpotConfig
+import com.zuratouch.prizewheel.domain.JackpotState
 import com.zuratouch.prizewheel.domain.PrizeCategory
 import com.zuratouch.prizewheel.domain.PrizeEngine
+import com.zuratouch.prizewheel.domain.PrizeProductCatalog
+import com.zuratouch.prizewheel.domain.TierPrizeSelector
 import com.zuratouch.prizewheel.domain.QueuedProduct
 import com.zuratouch.prizewheel.domain.SaleLogEntry
 import com.zuratouch.prizewheel.domain.SaleLogResult
@@ -14,6 +22,8 @@ import com.zuratouch.prizewheel.domain.Spiral
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
 data class AppConfig(
     val spinPriceCents: Long,
@@ -21,6 +31,7 @@ data class AppConfig(
     val mysteryBoxLabel: String,
     val soundEnabled: Boolean,
     val experienceMode: CustomerExperience = CustomerExperience.WHEEL,
+    val jackpot: JackpotState = JackpotConfig.DEFAULT,
 )
 
 data class StockSnapshot(
@@ -54,6 +65,14 @@ interface StockDataSource {
     suspend fun setOperatorPin(pin: String)
     suspend fun verifyOperatorPin(pin: String): Boolean
     suspend fun setExperienceMode(mode: CustomerExperience)
+    suspend fun getJackpotState(): JackpotState
+    suspend fun applyJackpotAfterSuccessfulPlay(tierPriceCents: Long, wonCategoryId: String)
+    suspend fun registerDigitalPurchase(
+        productName: String,
+        categoryLabel: String,
+        priceCents: Long,
+        customerEmail: String,
+    ): DigitalPurchaseRecord
 }
 
 class StockRepository(
@@ -61,8 +80,13 @@ class StockRepository(
     private val spiralDao: com.zuratouch.prizewheel.data.local.SpiralDao,
     private val appConfigDao: com.zuratouch.prizewheel.data.local.AppConfigDao,
     private val saleLogDao: com.zuratouch.prizewheel.data.local.SaleLogDao,
+    private val digitalPurchaseDao: com.zuratouch.prizewheel.data.local.DigitalPurchaseDao,
+    private val digitalFulfillmentGateway: DigitalPurchaseFulfillmentGateway =
+        NoOpDigitalPurchaseFulfillmentGateway,
     private val engine: PrizeEngine = PrizeEngine(),
+    private val jackpotSelector: TierPrizeSelector = TierPrizeSelector(engine),
 ) : StockDataSource {
+    private val jackpotMutex = Mutex()
     override val stockSnapshot: Flow<StockSnapshot> = combine(
         categoryDao.observeAll(),
         spiralDao.observeAll(),
@@ -177,6 +201,63 @@ class StockRepository(
         appConfigDao.updateExperienceMode(mode.name)
     }
 
+    override suspend fun getJackpotState(): JackpotState = jackpotMutex.withLock {
+        readJackpotState()
+    }
+
+    override suspend fun applyJackpotAfterSuccessfulPlay(tierPriceCents: Long, wonCategoryId: String) {
+        jackpotMutex.withLock {
+            val current = readJackpotState()
+            val updated = jackpotSelector.jackpotAfterSuccessfulPlay(
+                current = current,
+                tierPriceCents = tierPriceCents,
+                wonCategoryId = wonCategoryId,
+            )
+            appConfigDao.updateJackpotAccumulated(updated.accumulatedRevenueCents)
+        }
+    }
+
+    override suspend fun registerDigitalPurchase(
+        productName: String,
+        categoryLabel: String,
+        priceCents: Long,
+        customerEmail: String,
+    ): DigitalPurchaseRecord {
+        val normalizedEmail = customerEmail.trim()
+        val entity = com.zuratouch.prizewheel.data.local.DigitalPurchaseEntity(
+            timestampMs = System.currentTimeMillis(),
+            productName = productName,
+            categoryLabel = categoryLabel,
+            priceCents = priceCents,
+            customerEmail = normalizedEmail,
+            status = DigitalPurchaseStatus.PENDING_FULFILLMENT.name,
+        )
+        val id = digitalPurchaseDao.insert(entity)
+        val record = DigitalPurchaseRecord(
+            id = id,
+            timestampMs = entity.timestampMs,
+            productName = entity.productName,
+            categoryLabel = entity.categoryLabel,
+            priceCents = entity.priceCents,
+            customerEmail = entity.customerEmail,
+            status = DigitalPurchaseStatus.PENDING_FULFILLMENT,
+        )
+        digitalFulfillmentGateway.onDigitalPurchaseRegistered(record)
+        return record
+    }
+
+    private suspend fun readJackpotState(): JackpotState {
+        val config = appConfigDao.get()
+        return if (config == null) {
+            JackpotConfig.DEFAULT
+        } else {
+            JackpotState(
+                accumulatedRevenueCents = config.jackpotAccumulatedRevenueCents,
+                enabled = config.jackpotEnabled,
+            )
+        }
+    }
+
     suspend fun upsertCategory(category: PrizeCategory) {
         require(category.id.isNotBlank()) { "ID da categoria obrigatório" }
         require(category.label.isNotBlank()) { "Nome da categoria obrigatório" }
@@ -252,7 +333,14 @@ class StockRepository(
         }
     }
 
-    private fun defaultConfig() = AppConfig(200, "/dev/ttyS0", "Mystery Box", true, CustomerExperience.WHEEL)
+    private fun defaultConfig() = AppConfig(
+        spinPriceCents = 200,
+        serialPortPath = "/dev/ttyS0",
+        mysteryBoxLabel = "Mystery Box",
+        soundEnabled = true,
+        experienceMode = CustomerExperience.WHEEL,
+        jackpot = JackpotConfig.DEFAULT,
+    )
 
     private companion object {
         const val MIN_PIN_LENGTH = OperatorPinHasher.MIN_LENGTH
@@ -287,6 +375,10 @@ private fun AppConfigEntity.toDomain() = AppConfig(
     soundEnabled = soundEnabled,
     experienceMode = runCatching { CustomerExperience.valueOf(experienceMode) }
         .getOrDefault(CustomerExperience.WHEEL),
+    jackpot = JackpotState(
+        accumulatedRevenueCents = jackpotAccumulatedRevenueCents,
+        enabled = jackpotEnabled,
+    ),
 )
 
 private fun SaleLogEntity.toDomain() = SaleLogEntry(

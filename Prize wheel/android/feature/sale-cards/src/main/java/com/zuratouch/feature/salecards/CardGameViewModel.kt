@@ -12,7 +12,11 @@ import com.zuratouch.prizewheel.domain.CardSlot
 import com.zuratouch.prizewheel.domain.DispensePlan
 import com.zuratouch.prizewheel.domain.DispenseResult
 import com.zuratouch.prizewheel.domain.PrizeCategory
+import com.zuratouch.prizewheel.domain.JackpotDisplayState
+import com.zuratouch.prizewheel.domain.JackpotProgress
+import com.zuratouch.prizewheel.domain.JackpotState
 import com.zuratouch.prizewheel.domain.PrizeEngine
+import com.zuratouch.prizewheel.domain.PrizeTierCatalog
 import com.zuratouch.prizewheel.domain.SaleLogResult
 import com.zuratouch.prizewheel.domain.SaleState
 import com.zuratouch.prizewheel.domain.Spiral
@@ -33,7 +37,8 @@ import kotlin.random.Random
 
 data class CardGameUiState(
     val saleState: SaleState = SaleState.IDLE,
-    val playPriceCents: Long = 200,
+    val selectedTierId: String = PrizeTierCatalog.LITE,
+    val playPriceCents: Long = PrizeTierCatalog.tierByIdOrThrow(PrizeTierCatalog.LITE).priceCents,
     val mysteryBoxLabel: String = "Mystery Box",
     val availablePrizes: List<AvailablePrizeDisplay> = emptyList(),
     val board: CardBoard? = null,
@@ -42,6 +47,10 @@ data class CardGameUiState(
     val message: String? = null,
     val canPlay: Boolean = false,
     val isBusy: Boolean = false,
+    val isTrialRound: Boolean = false,
+    val prizeCategories: List<PrizeCategory> = emptyList(),
+    val jackpotDisplay: JackpotDisplayState = JackpotDisplayState(),
+    val availableTierIds: List<String> = emptyList(),
 )
 
 class CardGameViewModel(
@@ -68,6 +77,9 @@ class CardGameViewModel(
     private var revealReturnJob: Job? = null
     private var idleDisplayRandom: Random = Random(System.nanoTime())
     private var dispenseStarted = false
+    private var isTrialRound = false
+    private var activeTierPriceCents: Long? = null
+    private var jackpotState: JackpotState = com.zuratouch.prizewheel.domain.JackpotConfig.DEFAULT
 
     init {
         restoreSession()
@@ -77,8 +89,18 @@ class CardGameViewModel(
                 stock = snapshot.stock
                 playPriceCents = snapshot.config.spinPriceCents
                 mysteryBoxLabel = snapshot.config.mysteryBoxLabel
+                jackpotState = snapshot.config.jackpot
                 feedbackManager.setSoundEnabled(snapshot.config.soundEnabled)
-                val canPlay = boardGenerator.canGenerateBoard(categories, stock)
+                val jackpotDisplay = JackpotProgress.displayStateFor(snapshot.config.jackpot)
+                val availableTierIds = boardGenerator
+                    .playableTiers(categories, stock, jackpotState)
+                    .map { it.id }
+                val selectedTierId = resolvePlayableTierId(
+                    currentTierId = _uiState.value.selectedTierId,
+                    availableTierIds = availableTierIds,
+                )
+                val tierPrice = currentTierPrice(selectedTierId)
+                val canPlay = availableTierIds.isNotEmpty()
                 val availablePrizes = if (_uiState.value.saleState == SaleState.IDLE) {
                     AvailablePrizes.fromStock(categories, stock, idleDisplayRandom)
                 } else {
@@ -87,17 +109,24 @@ class CardGameViewModel(
                 _uiState.update { current ->
                     if (current.saleState == SaleState.IDLE) {
                         current.copy(
-                            playPriceCents = playPriceCents,
+                            selectedTierId = selectedTierId,
+                            playPriceCents = tierPrice ?: playPriceCents,
                             mysteryBoxLabel = mysteryBoxLabel,
                             availablePrizes = availablePrizes,
+                            prizeCategories = categories,
                             canPlay = canPlay,
+                            availableTierIds = availableTierIds,
+                            jackpotDisplay = jackpotDisplay,
                             message = if (canPlay) null else "Modo cartas indisponível — reponha stock.",
                         )
                     } else {
                         current.copy(
-                            playPriceCents = playPriceCents,
+                            playPriceCents = tierPrice ?: playPriceCents,
                             mysteryBoxLabel = mysteryBoxLabel,
                             availablePrizes = availablePrizes,
+                            prizeCategories = categories,
+                            availableTierIds = availableTierIds,
+                            jackpotDisplay = jackpotDisplay,
                         )
                     }
                 }
@@ -105,14 +134,30 @@ class CardGameViewModel(
         }
     }
 
-    fun startRound() {
+    fun selectTier(tierId: String) {
         if (_uiState.value.saleState != SaleState.IDLE || isProcessing) return
-        if (!boardGenerator.canGenerateBoard(categories, stock)) {
-            showError("Não há prémios disponíveis para cartas.")
-            return
+        if (tierId !in _uiState.value.availableTierIds) return
+        val tier = PrizeTierCatalog.tierById(tierId) ?: return
+        feedbackManager.buttonTap()
+        _uiState.update {
+            it.copy(
+                selectedTierId = tierId,
+                playPriceCents = tier.priceCents,
+            )
         }
+    }
+
+    fun startRound() = beginRound(isTrial = false)
+
+    fun startTrialRound() = beginRound(isTrial = true)
+
+    private fun beginRound(isTrial: Boolean) {
+        val ui = _uiState.value
+        if (ui.saleState != SaleState.IDLE || isProcessing) return
+        if (ui.selectedTierId !in ui.availableTierIds) return
         isProcessing = true
-        _uiState.update { it.copy(isBusy = true) }
+        isTrialRound = isTrial
+        _uiState.update { it.copy(isBusy = true, isTrialRound = isTrial) }
         paymentConfirmed = false
         dispenseStarted = false
         feedbackManager.buttonTap()
@@ -127,52 +172,100 @@ class CardGameViewModel(
                         message = null,
                     )
                 }
-                val paymentLane = resolvePaymentLane()
-                when (val payment = paymentTerminal.requestPayment(playPriceCents, paymentLane)) {
-                    PaymentResult.Completed -> {
-                        paymentConfirmed = true
-                        feedbackManager.paymentConfirmed()
-                        val board = boardGenerator.generate(
-                            categories = categories,
-                            stock = stock,
-                            random = Random(System.nanoTime()),
-                        )
-                        if (board == null) {
-                            paymentTerminal.refundPayment(playPriceCents, paymentLane)
-                            isProcessing = false
-                            paymentConfirmed = false
-                            _uiState.update { it.copy(isBusy = false) }
-                            showError("Não foi possível gerar o tabuleiro.")
-                            return@launch
-                        }
-                        val session = CardGameSession(board = board, paymentConfirmed = true)
-                        persistSession(session)
-                        activeSession = session
-                        _uiState.update {
-                            it.copy(
-                                saleState = SaleState.PLAYING,
-                                board = board,
-                                message = null,
-                                isBusy = false,
-                            )
-                        }
-                        isProcessing = false
-                    }
-                    PaymentResult.Cancelled -> {
-                        logPaymentFailure("Pagamento cancelado", paymentLane)
-                        isProcessing = false
-                        _uiState.update { it.copy(isBusy = false) }
-                        showError("Pagamento cancelado.")
-                    }
-                    is PaymentResult.Failed -> {
-                        logPaymentFailure(payment.reason, paymentLane)
-                        isProcessing = false
-                        _uiState.update { it.copy(isBusy = false) }
-                        showError(payment.reason)
-                    }
+                if (isTrial) {
+                    startTrialRoundInternal()
+                } else {
+                    startPaidRoundInternal()
                 }
             } catch (_: CancellationException) {
                 // Cleanup handled in onCleared().
+            }
+        }
+    }
+
+    private suspend fun startTrialRoundInternal() {
+        val tier = resolveSelectedTier() ?: return failBoardGeneration(isTrial = true)
+        val board = boardGenerator.generateForTier(
+            tier = tier,
+            categories = categories,
+            stock = stock,
+            jackpot = stockRepository.getJackpotState(),
+            random = Random(System.nanoTime()),
+        )
+        if (board == null) {
+            isProcessing = false
+            isTrialRound = false
+            _uiState.update { it.copy(isBusy = false, isTrialRound = false) }
+            return
+        }
+        val session = CardGameSession(
+            board = board,
+            paymentConfirmed = false,
+            isTrialRound = true,
+        )
+        persistSession(session)
+        activeSession = session
+        _uiState.update {
+            it.copy(
+                saleState = SaleState.PLAYING,
+                board = board,
+                message = null,
+                isBusy = false,
+                isTrialRound = true,
+            )
+        }
+        isProcessing = false
+    }
+
+    private suspend fun startPaidRoundInternal() {
+        val tier = resolveSelectedTier() ?: return failBoardGeneration(isTrial = false)
+        activeTierPriceCents = tier.priceCents
+        val paymentLane = resolvePaymentLane()
+        when (val payment = paymentTerminal.requestPayment(tier.priceCents, paymentLane)) {
+            PaymentResult.Completed -> {
+                paymentConfirmed = true
+                feedbackManager.paymentConfirmed()
+                val board = boardGenerator.generateForTier(
+                    tier = tier,
+                    categories = categories,
+                    stock = stock,
+                    jackpot = stockRepository.getJackpotState(),
+                    random = Random(System.nanoTime()),
+                )
+                if (board == null) {
+                    paymentTerminal.refundPayment(tier.priceCents, paymentLane)
+                    isProcessing = false
+                    paymentConfirmed = false
+                    _uiState.update { it.copy(isBusy = false, isTrialRound = false) }
+                    return
+                }
+                val session = CardGameSession(board = board, paymentConfirmed = true)
+                persistSession(session)
+                activeSession = session
+                _uiState.update {
+                    it.copy(
+                        saleState = SaleState.PLAYING,
+                        board = board,
+                        message = null,
+                        isBusy = false,
+                        isTrialRound = false,
+                    )
+                }
+                isProcessing = false
+            }
+            PaymentResult.Cancelled -> {
+                logPaymentFailure("Pagamento cancelado", paymentLane)
+                isProcessing = false
+                isTrialRound = false
+                _uiState.update { it.copy(isBusy = false, isTrialRound = false) }
+                showError("Pagamento cancelado.")
+            }
+            is PaymentResult.Failed -> {
+                logPaymentFailure(payment.reason, paymentLane)
+                isProcessing = false
+                isTrialRound = false
+                _uiState.update { it.copy(isBusy = false, isTrialRound = false) }
+                showError(payment.reason)
             }
         }
     }
@@ -198,7 +291,11 @@ class CardGameViewModel(
         if (session.selectedSlot == null) return
         val winSlot = session.board.slots.firstOrNull { it.isTargetSlot } ?: return
         if (_uiState.value.saleState != SaleState.PLAYING || dispenseStarted) return
-        viewModelScope.launch { dispense(winSlot) }
+        if (isTrialRound || session.isTrialRound) {
+            completeTrialRound(winSlot)
+        } else {
+            viewModelScope.launch { dispense(winSlot) }
+        }
     }
 
     fun finishRound() {
@@ -209,13 +306,34 @@ class CardGameViewModel(
         }
         val winSlot = activeSession?.board?.slots?.firstOrNull { it.isTargetSlot }
         if (winSlot != null && !dispenseStarted) {
-            viewModelScope.launch {
-                dispense(winSlot)
-                returnToIdle()
+            if (isTrialRound || activeSession?.isTrialRound == true) {
+                completeTrialRound(winSlot)
+            } else {
+                viewModelScope.launch { dispense(winSlot) }
             }
         } else {
             returnToIdle()
         }
+    }
+
+    private fun completeTrialRound(winSlot: CardSlot) {
+        if (dispenseStarted) return
+        dispenseStarted = true
+        val prizeName = winSlot.dispensePlan.product.productName
+        clearSession()
+        activeSession = null
+        isProcessing = false
+        isTrialRound = false
+        paymentConfirmed = false
+        _uiState.update {
+            it.copy(
+                saleState = SaleState.PLAYING,
+                revealedPrize = prizeName,
+                message = TRIAL_COMPLETE_MESSAGE,
+                isTrialRound = false,
+            )
+        }
+        schedulePostWinReturn()
     }
 
     private suspend fun dispense(slot: CardSlot) {
@@ -231,6 +349,9 @@ class CardGameViewModel(
         val paymentLane = slot.dispensePlan.spiral.vmcLane
         if (plan != null) {
             stockRepository.registerDelivery(plan.spiral.id)
+            activeTierPriceCents?.let { tierPrice ->
+                stockRepository.applyJackpotAfterSuccessfulPlay(tierPrice, slot.category.id)
+            }
             refreshStockFromRepository()
             stockRepository.logSale(
                 categoryLabel = slot.category.label,
@@ -250,9 +371,11 @@ class CardGameViewModel(
             isProcessing = false
             paymentConfirmed = false
             activeSession = null
+            activeTierPriceCents = null
             schedulePostWinReturn()
         } else {
-            val refunded = paymentTerminal.refundPayment(playPriceCents, paymentLane)
+            val refundAmount = activeTierPriceCents ?: playPriceCents
+            val refunded = paymentTerminal.refundPayment(refundAmount, paymentLane)
             stockRepository.logSale(
                 categoryLabel = slot.category.label,
                 productName = null,
@@ -264,6 +387,7 @@ class CardGameViewModel(
             isProcessing = false
             paymentConfirmed = false
             activeSession = null
+            activeTierPriceCents = null
             showError(
                 if (refunded) {
                     "Não foi possível entregar o prémio. O valor será reembolsado."
@@ -273,6 +397,23 @@ class CardGameViewModel(
             )
         }
     }
+
+    private fun resolveSelectedTier() = PrizeTierCatalog.tierById(_uiState.value.selectedTierId)
+
+    private fun resolvePlayableTierId(currentTierId: String, availableTierIds: List<String>): String {
+        if (currentTierId in availableTierIds) return currentTierId
+        return PrizeTierCatalog.tiers.firstOrNull { it.id in availableTierIds }?.id ?: currentTierId
+    }
+
+    private fun failBoardGeneration(isTrial: Boolean) {
+        isProcessing = false
+        isTrialRound = false
+        _uiState.update { it.copy(isBusy = false, isTrialRound = false) }
+        showError("Não foi possível iniciar a ronda.")
+    }
+
+    private fun currentTierPrice(selectedTierId: String): Long? =
+        PrizeTierCatalog.tierById(selectedTierId)?.priceCents
 
     private fun buildSaleLogMessage(slot: CardSlot): String {
         val session = activeSession
@@ -313,6 +454,7 @@ class CardGameViewModel(
         paymentConfirmed = false
         isProcessing = false
         dispenseStarted = false
+        isTrialRound = false
         viewModelScope.launch {
             refreshStockFromRepository()
             applyIdleState()
@@ -325,19 +467,29 @@ class CardGameViewModel(
         stock = snapshot.stock
         playPriceCents = snapshot.config.spinPriceCents
         mysteryBoxLabel = snapshot.config.mysteryBoxLabel
+        jackpotState = snapshot.config.jackpot
     }
 
     private fun applyIdleState() {
         idleDisplayRandom = Random(System.nanoTime())
-        val canPlay = boardGenerator.canGenerateBoard(categories, stock)
+        val availableTierIds = boardGenerator
+            .playableTiers(categories, stock, jackpotState)
+            .map { it.id }
+        val selectedTierId = resolvePlayableTierId(PrizeTierCatalog.LITE, availableTierIds)
+        val canPlay = availableTierIds.isNotEmpty()
         _uiState.value = CardGameUiState(
             saleState = SaleState.IDLE,
-            playPriceCents = playPriceCents,
+            playPriceCents = currentTierPrice(selectedTierId) ?: playPriceCents,
+            selectedTierId = selectedTierId,
             mysteryBoxLabel = mysteryBoxLabel,
             availablePrizes = AvailablePrizes.fromStock(categories, stock, idleDisplayRandom),
+            prizeCategories = categories,
             canPlay = canPlay,
+            availableTierIds = availableTierIds,
+            jackpotDisplay = _uiState.value.jackpotDisplay,
             message = if (canPlay) null else "Modo cartas indisponível — reponha stock.",
         )
+        activeTierPriceCents = null
     }
 
     private fun showError(message: String) {
@@ -375,12 +527,14 @@ class CardGameViewModel(
     private fun restoreSession() {
         val json = savedStateHandle.get<String>(CardGameSessionCodec.SAVED_STATE_KEY) ?: return
         val session = CardGameSessionCodec.decode(json) ?: return
-        if (!session.paymentConfirmed) return
+        if (!session.paymentConfirmed && !session.isTrialRound) return
         activeSession = session
-        paymentConfirmed = true
+        paymentConfirmed = session.paymentConfirmed
+        isTrialRound = session.isTrialRound
         val selected = session.selectedSlot
         _uiState.value = CardGameUiState(
             saleState = when {
+                selected != null && session.isTrialRound -> SaleState.PLAYING
                 selected != null -> SaleState.DISPENSING
                 else -> SaleState.PLAYING
             },
@@ -388,8 +542,9 @@ class CardGameViewModel(
             board = session.board,
             selectedCardIndex = selected?.index,
             canPlay = false,
+            isTrialRound = session.isTrialRound,
         )
-        if (selected != null) {
+        if (selected != null && !session.isTrialRound) {
             viewModelScope.launch { dispense(selected) }
         }
     }
@@ -424,14 +579,14 @@ class CardGameViewModel(
     override fun onCleared() {
         purchaseJob?.cancel()
         val session = activeSession
-        if (session != null && paymentConfirmed) {
+        if (session != null && paymentConfirmed && !session.isTrialRound) {
             runBlocking {
                 val lane = session.board.slots.firstOrNull()?.dispensePlan?.spiral?.vmcLane ?: 1
                 val state = _uiState.value.saleState
                 if (state == SaleState.PAYMENT_PENDING) {
                     paymentTerminal.cancel()
                 } else if (state == SaleState.PLAYING || state == SaleState.DISPENSING) {
-                    paymentTerminal.refundPayment(playPriceCents, lane)
+                    paymentTerminal.refundPayment(activeTierPriceCents ?: playPriceCents, lane)
                 }
             }
         }
@@ -441,5 +596,6 @@ class CardGameViewModel(
     companion object {
         const val ERROR_AUTO_RETURN_MS = 8_000L
         const val POST_WIN_RETURN_MS = 5_000L
+        const val TRIAL_COMPLETE_MESSAGE = "Modo demonstração — produto não entregue."
     }
 }

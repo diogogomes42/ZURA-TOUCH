@@ -88,6 +88,24 @@ class CardBoardGeneratorTest {
     }
 
     @Test
+    fun `playable tiers exclude incompatible price levels`() {
+        val stock = listOf(
+            spiral("basic", 1, 1, listOf(QueuedProduct(PrizeProductCatalog.BASIC, "Adesivo"))),
+            spiral("common", 1, 2, listOf(QueuedProduct(PrizeProductCatalog.COMMON, "Boné"))),
+        )
+        val categories = listOf(
+            PrizeCategory(PrizeProductCatalog.BASIC, "Básico", 0xFFA0AEC0),
+            PrizeCategory(PrizeProductCatalog.COMMON, "Comum", 0xFF718096),
+            PrizeCategory(PrizeProductCatalog.RARE, "Raro", 0xFF3182CE),
+        )
+        val playable = generator.playableTiers(categories, stock, JackpotConfig.DEFAULT).map { it.id }
+        assertTrue(PrizeTierCatalog.LITE in playable)
+        assertTrue(PrizeTierCatalog.PLUS in playable)
+        assertFalse(PrizeTierCatalog.PRO in playable)
+        assertFalse(PrizeTierCatalog.PRIME in playable)
+    }
+
+    @Test
     fun `blocks when nothing is dispensable at front`() {
         val blockedStock = listOf(
             spiral("1", 1, 1, listOf(QueuedProduct("orphan", "Bloqueado"), QueuedProduct("common", "Frente"))),

@@ -12,5 +12,22 @@
     <string name="auto_return_hint">A voltar automaticamente em breve…</string>
     <string name="error_generic">Ocorreu um erro.</string>
     <string name="no_stock">Sem prémios disponíveis</string>
+    <string name="wheel_idle_cta_title">PRONTO PARA GANHAR?</string>
+    <string name="wheel_idle_cta_subtitle">Gire a roda e descubra o seu prémio</string>
+    <string name="tier_change_label">ALTERAR</string>
+    <string name="jackpot_bar_title">JACKPOT AUTOMÁTICO</string>
+    <string name="jackpot_bar_subtitle">A barra enche à medida que a máquina é jogada</string>
+    <string name="jackpot_bar_ready_title">JACKPOT AUTOMÁTICO ATIVO</string>
+    <string name="jackpot_bar_ready_subtitle">Prémio Lendário garantido na próxima jogada</string>
+    <string name="tier_selection_title">Escolhe o teu nível</string>
+    <string name="tier_selection_subtitle">Maior nível = maior concentração de prémios raros</string>
+    <string name="tier_selection_prizes_label">Prémios: %1$s</string>
+    <string name="tier_selection_progression">LITE → PLUS → PRO → ULTRA → PRIME</string>
+    <string name="tier_selection_continue">CONTINUAR</string>
+    <string name="tier_info_title">Níveis de jogo</string>
+    <string name="tier_info_subtitle">Cada nível muda o valor e os tipos de prémios possíveis</string>
+    <string name="tier_info_prizes_label">Prémios possíveis: %1$s</string>
+    <string name="tier_info_close">Fechar</string>
+    <string name="tier_info_content_description">Informação sobre os níveis de jogo</string>
     <string name="hardware_degraded_banner">Hardware indisponível (%1$s): %2$s</string>
 </resources>

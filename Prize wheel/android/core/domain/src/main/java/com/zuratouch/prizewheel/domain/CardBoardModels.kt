@@ -38,9 +38,10 @@ data class CardBoard(
     }
 }
 
-/** Paid round state — persisted across process death until the round completes. */
+/** Paid or trial round state — persisted across process death until the round completes. */
 data class CardGameSession(
     val board: CardBoard,
     val paymentConfirmed: Boolean,
     val selectedSlot: CardSlot? = null,
+    val isTrialRound: Boolean = false,
 )

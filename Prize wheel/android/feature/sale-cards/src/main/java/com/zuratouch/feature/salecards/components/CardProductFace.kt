@@ -44,6 +44,7 @@ internal fun CardProductFace(
     categoryColor: Long? = null,
     variant: CardFaceVariant = CardFaceVariant.Standard,
 ) {
+    val tierColor = categoryColor?.let { Color(it) }
     val footerFraction = when (variant) {
         CardFaceVariant.Hero -> 0.38f
         CardFaceVariant.Spotlight -> 0.34f
@@ -63,7 +64,11 @@ internal fun CardProductFace(
         modifier = modifier
             .clip(RoundedCornerShape(cornerRadius))
             .background(Color(0xFF0B1220))
-            .border(1.dp, ZuraColors.Accent.copy(alpha = 0.22f), RoundedCornerShape(cornerRadius)),
+            .border(
+                width = if (tierColor != null) 2.dp else 1.dp,
+                color = tierColor?.copy(alpha = 0.9f) ?: ZuraColors.Accent.copy(alpha = 0.22f),
+                shape = RoundedCornerShape(cornerRadius),
+            ),
     ) {
         if (imageRes != null) {
             SplitCardLayout(
@@ -74,6 +79,7 @@ internal fun CardProductFace(
                 nameLines = nameLines,
                 imagePadding = imagePadding,
                 variant = variant,
+                accentLine = tierColor ?: accentForVariant(variant),
             )
         } else {
             TextOnlyCardFace(
@@ -96,6 +102,7 @@ private fun SplitCardLayout(
     nameLines: Int,
     imagePadding: Dp,
     variant: CardFaceVariant,
+    accentLine: Color,
 ) {
     Column(modifier = Modifier.fillMaxSize()) {
         Box(
@@ -122,11 +129,18 @@ private fun SplitCardLayout(
             nameSize = nameSize,
             nameLines = nameLines,
             variant = variant,
+            accentLine = accentLine,
             modifier = Modifier
                 .fillMaxWidth()
                 .weight(footerFraction),
         )
     }
+}
+
+private fun accentForVariant(variant: CardFaceVariant): Color = when (variant) {
+    CardFaceVariant.Hero -> Color(0xFFFFD700)
+    CardFaceVariant.Spotlight -> ZuraColors.Accent
+    CardFaceVariant.Standard -> ZuraColors.Accent.copy(alpha = 0.55f)
 }
 
 @Composable
@@ -155,6 +169,7 @@ private fun TextOnlyCardFace(
             nameSize = nameSize,
             nameLines = nameLines,
             variant = variant,
+            accentLine = Color(categoryColor ?: 0xFF15213A),
             modifier = Modifier
                 .fillMaxWidth()
                 .weight(0.8f),
@@ -168,14 +183,10 @@ private fun CardFooterPanel(
     nameSize: TextUnit,
     nameLines: Int,
     variant: CardFaceVariant,
+    accentLine: Color,
     modifier: Modifier = Modifier,
 ) {
-    val accentLine = when (variant) {
-        CardFaceVariant.Hero -> Color(0xFFFFD700)
-        CardFaceVariant.Spotlight -> ZuraColors.Accent
-        CardFaceVariant.Standard -> ZuraColors.Accent.copy(alpha = 0.55f)
-    }
-    Column(
+    Box(
         modifier = modifier
             .background(Color(0xFF0A101C))
             .border(
@@ -184,7 +195,7 @@ private fun CardFooterPanel(
                 shape = RoundedCornerShape(bottomStart = 10.dp, bottomEnd = 10.dp),
             )
             .padding(horizontal = 8.dp, vertical = 6.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
+        contentAlignment = Alignment.Center,
     ) {
         Text(
             text = productName,

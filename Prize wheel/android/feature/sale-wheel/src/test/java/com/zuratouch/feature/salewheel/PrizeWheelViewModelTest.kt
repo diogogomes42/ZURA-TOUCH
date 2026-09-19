@@ -4,8 +4,12 @@ import com.zuratouch.prizewheel.data.AppConfig
 import com.zuratouch.prizewheel.data.StockDataSource
 import com.zuratouch.prizewheel.data.StockSnapshot
 import com.zuratouch.prizewheel.domain.DispenseResult
+import com.zuratouch.prizewheel.domain.JackpotConfig
+import com.zuratouch.prizewheel.domain.JackpotState
 import com.zuratouch.prizewheel.domain.PrizeCategory
 import com.zuratouch.prizewheel.domain.PrizeEngine
+import com.zuratouch.prizewheel.domain.PrizeProductCatalog
+import com.zuratouch.prizewheel.domain.PrizeTierCatalog
 import com.zuratouch.prizewheel.domain.QueuedProduct
 import com.zuratouch.prizewheel.domain.SaleLogResult
 import com.zuratouch.prizewheel.domain.SaleState
@@ -35,8 +39,9 @@ class PrizeWheelViewModelTest {
     private val testDispatcher = StandardTestDispatcher()
 
     private val categories = listOf(
-        PrizeCategory("common", "Comum", 0xFF718096),
-        PrizeCategory("rare", "Raro", 0xFF3182CE),
+        PrizeCategory(PrizeProductCatalog.BASIC, "Básico", 0xFFA0AEC0),
+        PrizeCategory(PrizeProductCatalog.COMMON, "Comum", 0xFF718096),
+        PrizeCategory(PrizeProductCatalog.RARE, "Raro", 0xFF3182CE),
     )
     private val stock = listOf(
         Spiral("A1", 1, 1, 1, 10, listOf(QueuedProduct("common", "Água"))),
@@ -60,8 +65,9 @@ class PrizeWheelViewModelTest {
 
     @Test
     fun `purchase completes spin and reveal on happy path`() = runTest {
+        val commonCategory = categories[1]
         val singleSnapshot = snapshot.copy(
-            categories = listOf(categories.first()),
+            categories = listOf(commonCategory),
             stock = listOf(stock.first()),
         )
         val payment = RecordingPaymentTerminal(PaymentResult.Completed)
@@ -74,7 +80,7 @@ class PrizeWheelViewModelTest {
         advanceUntilIdle()
 
         assertEquals(SaleState.SPINNING, viewModel.uiState.value.saleState)
-        assertEquals(listOf(categories.first()), viewModel.uiState.value.categories)
+        assertEquals(listOf(commonCategory), viewModel.uiState.value.categories)
 
         viewModel.onSpinAnimationComplete(viewModel.uiState.value.targetRotation)
         runCurrent()
@@ -105,7 +111,10 @@ class PrizeWheelViewModelTest {
         val engine = PrizeEngine()
         val sale = engine.createSale(categories, stock)
         require(sale != null)
-        assertEquals(categories, sale.wheelCategories)
+        assertEquals(
+            listOf(PrizeProductCatalog.COMMON, PrizeProductCatalog.RARE),
+            sale.wheelCategories.map { it.id }.sorted(),
+        )
     }
 
     private fun createViewModel(
@@ -180,6 +189,25 @@ private class FakeStockDataSource(initial: StockSnapshot) : StockDataSource {
     override suspend fun verifyOperatorPin(pin: String): Boolean = false
 
     override suspend fun setExperienceMode(mode: com.zuratouch.prizewheel.domain.CustomerExperience) = Unit
+
+    override suspend fun getJackpotState(): JackpotState = JackpotConfig.DEFAULT
+
+    override suspend fun applyJackpotAfterSuccessfulPlay(tierPriceCents: Long, wonCategoryId: String) = Unit
+
+    override suspend fun registerDigitalPurchase(
+        productName: String,
+        categoryLabel: String,
+        priceCents: Long,
+        customerEmail: String,
+    ) = com.zuratouch.prizewheel.domain.DigitalPurchaseRecord(
+        id = 1L,
+        timestampMs = 0L,
+        productName = productName,
+        categoryLabel = categoryLabel,
+        priceCents = priceCents,
+        customerEmail = customerEmail,
+        status = com.zuratouch.prizewheel.domain.DigitalPurchaseStatus.PENDING_FULFILLMENT,
+    )
 }
 
 private class RecordingPaymentTerminal(

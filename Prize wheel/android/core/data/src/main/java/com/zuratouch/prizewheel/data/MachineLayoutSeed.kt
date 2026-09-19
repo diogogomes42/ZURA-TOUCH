@@ -21,11 +21,12 @@ object MachineLayoutSeed {
     fun slotId(shelf: Int, slot: Int): String = "L${shelf}S$slot"
 
     fun defaultCategories(): List<CategoryEntity> = listOf(
+        CategoryEntity(PrizeCatalog.BASIC, "Básico", 0xFFA0AEC0, 60, "⬜"),
         CategoryEntity(PrizeCatalog.COMMON, "Comum", 0xFF718096, 50, "⚪"),
         CategoryEntity(PrizeCatalog.RARE, "Raro", 0xFF3182CE, 25, "🔵"),
         CategoryEntity(PrizeCatalog.EPIC, "Épico", 0xFF805AD5, 15, "🟣"),
-        CategoryEntity(PrizeCatalog.LEGENDARY, "Lendário", 0xFFD69E2E, 7, "🟡"),
-        CategoryEntity(PrizeCatalog.MYTHIC, "Mítico", 0xFFE53E3E, 3, "🔴"),
+        CategoryEntity(PrizeCatalog.LEGENDARY, "Lendário", 0xFFD69E2E, 3, "🟡"),
+        CategoryEntity(PrizeCatalog.MYTHIC, "Mítico", 0xFFE53E3E, 7, "🔴"),
     )
 
     /** All 24 physical spirals — empty queues until the operator fills them. */
