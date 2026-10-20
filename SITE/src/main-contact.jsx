@@ -6,7 +6,7 @@ import { ContactPage } from "./pages/ContactPage"
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>
-    <LanguageProvider>
+    <LanguageProvider page="contact">
       <ContactPage />
     </LanguageProvider>
   </StrictMode>

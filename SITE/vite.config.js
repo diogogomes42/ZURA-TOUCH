@@ -14,6 +14,7 @@ export default defineConfig({
         venues: resolve(__dirname, 'espacos/index.html'),
         brands: resolve(__dirname, 'marcas/index.html'),
         machines: resolve(__dirname, 'maquinas/index.html'),
+        labs: resolve(__dirname, 'labs/index.html'),
         contact: resolve(__dirname, 'contacto/index.html'),
         privacy: resolve(__dirname, 'privacidade/index.html'),
         terms: resolve(__dirname, 'termos/index.html'),

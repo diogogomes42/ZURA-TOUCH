@@ -1,16 +1,16 @@
 import {
-  Gamepad2,
-  Gift,
-  Wifi,
-  MapPin,
+  Sparkles,
+  Palette,
   Cpu,
-  Layers,
+  BarChart3,
+  Rocket,
+  Handshake,
 } from "lucide-react"
 import { motion } from "framer-motion"
 import { useScrollAnimation } from "../lib/useScrollAnimation"
 import { useLanguage } from "../i18n/LanguageContext"
 
-const icons = [Gamepad2, Gift, Wifi, MapPin, Cpu, Layers]
+const icons = [Sparkles, Palette, Cpu, BarChart3, Rocket, Handshake]
 
 export function WhyZura() {
   const [ref, isVisible] = useScrollAnimation(0.08)

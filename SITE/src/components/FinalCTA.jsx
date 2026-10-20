@@ -20,7 +20,7 @@ export function FinalCTA() {
             size="lg"
             className="text-base font-bold neon-glow btn-glow-pulse transition-all duration-300 hover:scale-[1.03] px-10"
           >
-            <a href="/contacto/?type=venue">{t("finalCTA.ctaInstall")}</a>
+            <a href="/contacto/">{t("finalCTA.ctaPrimary")}</a>
           </Button>
           <Button
             asChild
@@ -28,7 +28,7 @@ export function FinalCTA() {
             size="lg"
             className="text-base font-semibold border-purple-500/50 text-purple-200 hover:bg-purple-500/10 px-10 backdrop-blur-sm"
           >
-            <a href="/contacto/?type=brand">{t("finalCTA.ctaPartner")}</a>
+            <a href="/maquinas/">{t("finalCTA.ctaSecondary")}</a>
           </Button>
         </div>
       </div>

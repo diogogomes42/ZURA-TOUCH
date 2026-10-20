@@ -6,7 +6,7 @@ import { BrandsPage } from "./pages/BrandsPage"
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>
-    <LanguageProvider>
+    <LanguageProvider page="brands">
       <BrandsPage />
     </LanguageProvider>
   </StrictMode>

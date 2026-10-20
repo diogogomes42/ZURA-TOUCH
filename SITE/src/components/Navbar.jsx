@@ -28,10 +28,9 @@ export function Navbar() {
   }, [])
 
   const navLinks = [
-    { href: "/o-jogo/", label: t("nav.game") },
-    { href: "/espacos/", label: t("nav.venues") },
-    { href: "/marcas/", label: t("nav.brands") },
+    { href: "/marcas/", label: t("nav.brandExperiences") },
     { href: "/maquinas/", label: t("nav.machines") },
+    { href: "/labs/", label: t("nav.labs") },
   ]
 
   useEffect(() => {
@@ -49,7 +48,7 @@ export function Navbar() {
     >
       <nav className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
         <a href="/" className="flex items-center">
-          <img src="/logo.png" alt="Zura Touch" className="h-12 w-auto sm:h-14" />
+          <img src="/logo.png" alt="Zura Touch" className="h-16 w-auto -my-2 sm:h-20 sm:-my-3" />
         </a>
 
         <div className="hidden lg:flex lg:items-center lg:gap-6">
@@ -97,7 +96,7 @@ export function Navbar() {
             )}
           </div>
           <Button asChild variant="primary" size="sm" className="font-bold">
-            <a href="/contacto/">{t("nav.cta")}</a>
+            <a href="/contacto/">{t("nav.contact")}</a>
           </Button>
         </div>
 
@@ -157,7 +156,7 @@ export function Navbar() {
               )}
             </div>
             <Button asChild variant="primary" className="mt-2 font-bold">
-              <a href="/contacto/" onClick={() => setIsMobileMenuOpen(false)}>{t("nav.cta")}</a>
+              <a href="/contacto/" onClick={() => setIsMobileMenuOpen(false)}>{t("nav.contact")}</a>
             </Button>
           </div>
         </div>

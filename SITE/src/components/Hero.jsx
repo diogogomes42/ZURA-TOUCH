@@ -30,13 +30,10 @@ export function Hero() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.85, ease: [0.16, 1, 0.3, 1] }}
           >
-            <h1 className="text-4xl min-[400px]:text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-extrabold tracking-tight leading-[1.05]">
+            <h1 className="text-4xl sm:text-5xl md:text-6xl xl:text-7xl font-extrabold tracking-tight leading-[1.05]">
               <span className="hero-headline">{t("hero.headline")}</span>
             </h1>
-            <p className="mt-5 text-lg sm:text-xl md:text-2xl font-medium text-white/90 tracking-tight">
-              {t("hero.subtitle")}
-            </p>
-            <p className="mt-5 text-base sm:text-lg text-[#c4c1d6] max-w-xl mx-auto lg:mx-0 leading-relaxed">
+            <p className="mt-6 text-base sm:text-lg md:text-xl text-[#c4c1d6] max-w-xl mx-auto lg:mx-0 leading-relaxed">
               {t("hero.description")}
             </p>
 
@@ -58,7 +55,7 @@ export function Hero() {
                   size="lg"
                   className="px-8 sm:px-10 text-base font-bold btn-glow-pulse neon-glow transition-all duration-300 hover:scale-[1.04]"
                 >
-                  <a href="/o-jogo/">{t("hero.ctaDiscover")}</a>
+                  <a href="#solutions">{t("hero.ctaPrimary")}</a>
                 </Button>
               </motion.div>
               <Button
@@ -67,7 +64,7 @@ export function Hero() {
                 size="lg"
                 className="px-8 text-base font-semibold border-purple-500/50 text-purple-200 hover:bg-purple-500/10 hover:border-purple-400 backdrop-blur-sm"
               >
-                <a href="/marcas/">{t("hero.ctaPartner")}</a>
+                <a href="/maquinas/">{t("hero.ctaSecondary")}</a>
               </Button>
             </div>
           </motion.div>

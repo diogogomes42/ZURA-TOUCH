@@ -6,27 +6,34 @@ import { Card, CardContent } from "./ui/card"
 import { cn } from "../lib/utils"
 import { useLanguage } from "../i18n/LanguageContext"
 
-const AUDIENCE_TYPES = ["venue", "brand", "other"]
+const AUDIENCE_TYPES = [
+  { value: "brand-experiences", key: "BrandExperiences" },
+  { value: "machines", key: "Machines" },
+  { value: "partnerships", key: "Partnerships" },
+  { value: "other", key: "Other" },
+]
+
+const LEGACY_AUDIENCE_TYPES = {
+  brand: "brand-experiences",
+  venue: "partnerships",
+}
 
 export function Contact() {
   const [status, setStatus] = useState("idle")
-  const [audience, setAudience] = useState("venue")
+  const [audience, setAudience] = useState(AUDIENCE_TYPES[0].value)
   const { t } = useLanguage()
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
     const type = params.get("type")
-    if (type === "venue" || type === "brand" || type === "other") {
-      setAudience(type)
+    const resolved = LEGACY_AUDIENCE_TYPES[type] ?? type
+    if (AUDIENCE_TYPES.some((option) => option.value === resolved)) {
+      setAudience(resolved)
     }
   }, [])
 
-  const messagePlaceholder =
-    audience === "venue"
-      ? t("contact.messagePlaceholderVenue")
-      : audience === "brand"
-        ? t("contact.messagePlaceholderBrand")
-        : t("contact.messagePlaceholderOther")
+  const audienceKey = AUDIENCE_TYPES.find((option) => option.value === audience)?.key ?? "Other"
+  const messagePlaceholder = t(`contact.messagePlaceholder${audienceKey}`)
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -90,20 +97,21 @@ export function Contact() {
               <form id="contact-form" onSubmit={handleSubmit} className="space-y-6">
                 <div>
                   <p className="block text-sm font-medium text-[#c4c1d6] mb-3">{t("contact.audienceLabel")}</p>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                    {AUDIENCE_TYPES.map((type) => (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {AUDIENCE_TYPES.map((option) => (
                       <button
-                        key={type}
+                        key={option.value}
                         type="button"
-                        onClick={() => setAudience(type)}
+                        onClick={() => setAudience(option.value)}
+                        aria-pressed={audience === option.value}
                         className={cn(
                           "rounded-lg border px-3 py-2.5 text-sm font-medium transition-colors touch-manipulation",
-                          audience === type
+                          audience === option.value
                             ? "border-purple-400 bg-purple-500/20 text-white"
                             : "border-purple-500/20 text-[#c4c1d6] hover:border-purple-400/50 hover:text-white"
                         )}
                       >
-                        {t(`contact.audience${type.charAt(0).toUpperCase() + type.slice(1)}`)}
+                        {t(`contact.audience${option.key}`)}
                       </button>
                     ))}
                   </div>

@@ -5,10 +5,9 @@ export function Footer() {
   const { t } = useLanguage()
 
   const navLinks = [
-    { href: "/o-jogo/", label: t("nav.game") },
-    { href: "/espacos/", label: t("nav.venues") },
-    { href: "/marcas/", label: t("nav.brands") },
+    { href: "/marcas/", label: t("nav.brandExperiences") },
     { href: "/maquinas/", label: t("nav.machines") },
+    { href: "/labs/", label: t("nav.labs") },
     { href: "/contacto/", label: t("nav.contact") },
   ]
 

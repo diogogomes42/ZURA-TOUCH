@@ -1,11 +1,8 @@
 import { Navbar } from "./components/Navbar"
 import { Hero } from "./components/Hero"
-import { WhatIsZura } from "./components/WhatIsZura"
-import { HowItWorksFlow } from "./components/HowItWorksFlow"
-import { HomeVenues } from "./components/HomeVenues"
-import { HomePartners } from "./components/HomePartners"
+import { HomeBusinessAreas } from "./components/HomeBusinessAreas"
+import { HomeSolutionSections } from "./components/HomeSolutionSections"
 import { WhyZura } from "./components/WhyZura"
-import { LocationsSection } from "./components/LocationsSection"
 import { FinalCTA } from "./components/FinalCTA"
 import { Footer } from "./components/Footer"
 import { useLanguage } from "./i18n/LanguageContext"
@@ -21,12 +18,9 @@ function App() {
       <Navbar />
       <main key={lang}>
         <Hero />
-        <WhatIsZura />
-        <HowItWorksFlow />
-        <HomeVenues />
-        <HomePartners />
+        <HomeBusinessAreas />
+        <HomeSolutionSections />
         <WhyZura />
-        <LocationsSection />
         <FinalCTA />
         <Footer />
       </main>

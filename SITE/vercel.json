@@ -3,5 +3,9 @@
   "framework": "vite",
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
-  "installCommand": "npm install"
+  "installCommand": "npm install",
+  "redirects": [
+    { "source": "/o-jogo/:path*", "destination": "/marcas/", "permanent": true },
+    { "source": "/espacos/:path*", "destination": "/marcas/", "permanent": true }
+  ]
 }

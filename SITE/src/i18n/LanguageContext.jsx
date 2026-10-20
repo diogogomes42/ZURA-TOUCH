@@ -5,7 +5,7 @@ const STORAGE_KEY = "zura-touch-lang"
 
 const LanguageContext = createContext(null)
 
-export function LanguageProvider({ children }) {
+export function LanguageProvider({ children, page }) {
   const [lang, setLangState] = useState(() => {
     if (typeof window !== "undefined") {
       const stored = localStorage.getItem(STORAGE_KEY)
@@ -24,7 +24,10 @@ export function LanguageProvider({ children }) {
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, lang)
     document.documentElement.lang = lang === "pt" ? "pt-PT" : "en"
-    const { title, description } = translations[lang].meta
+    const siteMeta = translations[lang].meta
+    const pageMeta = page ? translations[lang][page]?.meta : null
+    const title = pageMeta?.title ?? siteMeta.title
+    const description = pageMeta?.description ?? siteMeta.description
     if (document.title !== title) {
       document.title = title
     }
@@ -52,7 +55,7 @@ export function LanguageProvider({ children }) {
         tag.setAttribute("content", value)
       }
     }
-  }, [lang])
+  }, [lang, page])
 
   const setLang = (newLang) => {
     if (newLang !== "pt" && newLang !== "en") return

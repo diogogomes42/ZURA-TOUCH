@@ -6,7 +6,7 @@ import { MachinesPage } from "./pages/MachinesPage"
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>
-    <LanguageProvider>
+    <LanguageProvider page="machines">
       <MachinesPage />
     </LanguageProvider>
   </StrictMode>
