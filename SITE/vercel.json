@@ -5,7 +5,7 @@
   "outputDirectory": "dist",
   "installCommand": "npm install",
   "redirects": [
-    { "source": "/o-jogo/:path*", "destination": "/marcas/", "permanent": true },
-    { "source": "/espacos/:path*", "destination": "/marcas/", "permanent": true }
+    { "source": "/o-jogo(/.*)?", "destination": "/marcas/", "permanent": true },
+    { "source": "/espacos(/.*)?", "destination": "/marcas/", "permanent": true }
   ]
 }

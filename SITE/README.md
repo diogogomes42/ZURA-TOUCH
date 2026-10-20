@@ -1,6 +1,6 @@
 # Zura Touch — Website
 
-React + Vite marketing site for [Zura Touch](https://zuratouch.pt).
+React + Vite marketing site for [Zura Touch](https://www.zuratouch.pt).
 
 ## Development
 

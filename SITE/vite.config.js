@@ -10,8 +10,6 @@ export default defineConfig({
     rollupOptions: {
       input: {
         home: resolve(__dirname, 'index.html'),
-        game: resolve(__dirname, 'o-jogo/index.html'),
-        venues: resolve(__dirname, 'espacos/index.html'),
         brands: resolve(__dirname, 'marcas/index.html'),
         machines: resolve(__dirname, 'maquinas/index.html'),
         labs: resolve(__dirname, 'labs/index.html'),

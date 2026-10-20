@@ -1,5 +1,5 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://zuratouch.pt/sitemap.xml
+Sitemap: https://www.zuratouch.pt/sitemap.xml
 
